@@ -1,0 +1,19 @@
+<script>
+async function loadNews(){
+  const r = await fetch('/api/news');
+  const j = await r.json();
+  const container = document.getElementById('newsList');
+  container.innerHTML = '';
+  (j.articles || []).forEach(a => {
+    const card = document.createElement('article');
+    card.className = 'card';
+    card.innerHTML = `
+      <h3><a href="${a.url}" target="_blank" rel="noopener noreferrer">${a.title}</a></h3>
+      <p class="meta">${a.source} • ${new Date(a.publishedAt).toLocaleString()}</p>
+      <p>${a.description ?? ''}</p>
+    `;
+    container.appendChild(card);
+  });
+}
+loadNews();
+</script>
