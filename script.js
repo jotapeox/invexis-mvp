@@ -15,7 +15,7 @@ function calcular() {
     if(tipo === "simples"){
       montante = capital + (capital * taxa * i) + (aporte * 12 * i);
     } else {
-      montante = montante * (1 + taxa) + aporte*12;
+      montante = montante * (1 + taxa)**i + aporte*12;
     }
     valoresAno.push(montante.toFixed(2));
   }
@@ -54,4 +54,5 @@ function calcular() {
       }
     }
   });
+
 }
