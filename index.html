@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <title>Invexis – Comparação de ETFs com Volatilidade</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
+<script src="script.js"></script>
+  <style>
   body {
     font-family: Arial, sans-serif;
     background-color: #f9f9f9;
@@ -105,57 +106,6 @@ function ajustarZoom(){
   const scale = 0.5 + (zoomSlider/100);
   document.body.style.transform = `scale(${scale})`;
 }
-
-function calcular() {
-  const capital = parseFloat(document.getElementById("capital").value);
-  const aporte = parseFloat(document.getElementById("aporte").value);
-  const anos = parseInt(document.getElementById("anos").value);
-  const tipo = document.getElementById("tipoJuros").value;
-  const etfSelect = document.getElementById("etf");
-  const selecionados = Array.from(etfSelect.selectedOptions);
-
-  if(selecionados.length === 0){
-    alert("Escolhe pelo menos um ETF!");
-    return;
-  }
-
-  const datasets = [];
-  let resultados = "";
-
-  selecionados.forEach(op => {
-    let montante = capital;
-    const valoresAno = [];
-    const taxa = parseFloat(op.dataset.taxa);
-    const vol = parseFloat(op.dataset.vol);
-
-    for(let i = 1; i <= anos; i++){
-      if(tipo === "simples"){
-        montante = capital + (capital * taxa * i) + (aporte * 12 * i);
-      } else {
-        montante = montante * (1 + taxa) + aporte*12;
-      }
-
-      // aplicar volatilidade aleatória
-      const flut = (Math.random() - 0.5) * vol * 2; // ±vol anual
-      montante = montante * (1 + flut);
-
-      valoresAno.push(montante.toFixed(2));
-    }
-
-    const totalInvestido = capital + aporte*12*anos;
-    const lucro = montante - totalInvestido;
-    resultados += `<p>${op.text} - Montante: €${montante.toFixed(2)}, Lucro: €${lucro.toFixed(2)}</p>`;
-
-    datasets.push({
-      label: op.text,
-      data: valoresAno,
-      borderColor: gerarCorAleatoria(),
-      backgroundColor: 'rgba(0,0,0,0.05)',
-      fill: true,
-      tension: 0.3
-    });
-  });
-
   document.getElementById("resultado").innerHTML = resultados;
 
   const ctx = document.getElementById('grafico').getContext('2d');
@@ -179,3 +129,4 @@ function gerarCorAleatoria() {
 </script>
 </body>
 </html>
+
