@@ -7,18 +7,22 @@ function calcular() {
   const tipo = document.getElementById("tipoJuros").value;
   const etfSelect = document.getElementById("etf");
   const taxa = parseFloat(etfSelect.selectedOptions[0].dataset.taxa);
-
-  let montante = capital;
   const valoresAno = [];
 
-  for(let i = 1; i <= anos; i++){
-    if(tipo === "simples"){
-      montante = capital + (capital * taxa * i) + (aporte * 12 * i);
-    } else {
-      montante = montante * (1 + taxa)**i + aporte*12;
+  let montanteAporte = 0;
+  if(tipo === "simples"){
+    montante = capital (1 + taxa * i);
+    for(int i = 0; i < anos*12; i++) {
+      montanteAporte += aporte*(1 + taxa * ( (12*anos - i + 1 )/12) );
     }
-    valoresAno.push(montante.toFixed(2));
+  } else {
+    montante = capital * (1 + taxa)**i;
+    montanteAporte = aporte * ( ((1 + taxa/12)**(12*anos) - 1)/(taxa/12) )
   }
+  
+  montante += montanteAporte;
+  valoresAno.push(montante.toFixed(2));
+  
 
   const totalInvestido = capital + aporte*12*anos;
   const lucro = montante - totalInvestido;
@@ -56,3 +60,4 @@ function calcular() {
   });
 
 }
+
