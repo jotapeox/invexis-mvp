@@ -1,19 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Economic Pulse</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  body { font-family: Arial, sans-serif; margin:0; padding:0; background:#111; color:#eee; }
+  h1 { text-align:center; margin:1rem 0; }
+  .news-container { display:flex; flex-wrap:wrap; justify-content:center; gap:1rem; padding:1rem; }
+  .card { background:#222; padding:1rem; border-radius:8px; width:300px; box-shadow:0 0 10px rgba(0,0,0,0.5); transition: transform 0.2s ease; }
+  .card:hover { transform: translateY(-5px); }
+  .card img { width:100%; border-radius:6px; max-height:160px; object-fit:cover; margin-bottom:0.5rem; }
+  .card h3 { font-size:1.1rem; margin:0.3rem 0; }
+  .card p { font-size:0.9rem; line-height:1.2rem; }
+  .meta { font-size:0.8rem; color:#aaa; margin-bottom:0.5rem; }
+  .toggle-dark { position:fixed; top:10px; right:10px; padding:0.5rem; background:#333; color:#eee; border:none; border-radius:4px; cursor:pointer; }
+</style>
+</head>
+<body>
+
+<button class="toggle-dark">Toggle Dark/Light</button>
+<h1>Economic Pulse</h1>
+<div class="news-container" id="newsList">
+  <p style="text-align:center;width:100%;">Loading news...</p>
+</div>
+
 <script>
-async function loadNews(){
-  const r = await fetch('/api/news');
-  const j = await r.json();
+// Dark mode toggle
+const toggleBtn = document.querySelector('.toggle-dark');
+toggleBtn.addEventListener('click', () => {
+  if(document.body.style.background === 'white') {
+    document.body.style.background = '#111';
+    document.body.style.color = '#eee';
+  } else {
+    document.body.style.background = 'white';
+    document.body.style.color = '#111';
+  }
+});
+
+// Fetch news from serverless function
+async function loadNews() {
   const container = document.getElementById('newsList');
-  container.innerHTML = '';
-  (j.articles || []).forEach(a => {
-    const card = document.createElement('article');
-    card.className = 'card';
-    card.innerHTML = `
-      <h3><a href="${a.url}" target="_blank" rel="noopener noreferrer">${a.title}</a></h3>
-      <p class="meta">${a.source} • ${new Date(a.publishedAt).toLocaleString()}</p>
-      <p>${a.description ?? ''}</p>
-    `;
-    container.appendChild(card);
-  });
+  try {
+    const res = await fetch('/api/news');
+    const data = await res.json();
+    container.innerHTML = '';
+    if (!data.articles || data.articles.length === 0) {
+      container.innerHTML = '<p>No news found.</p>';
+      return;
+    }
+
+    data.articles.forEach(a => {
+      const card = document.createElement('article');
+      card.className = 'card';
+      card.innerHTML = `
+        ${a.urlToImage ? `<img src="${a.urlToImage}" alt="News Image">` : ''}
+        <h3><a href="${a.url}" target="_blank" rel="noopener noreferrer">${a.title}</a></h3>
+        <p class="meta">${a.source} • ${new Date(a.publishedAt).toLocaleString()}</p>
+        <p>${a.description ?? ''}</p>
+      `;
+      container.appendChild(card);
+    });
+  } catch(e) {
+    container.innerHTML = `<p>Error loading news: ${e.message}</p>`;
+  }
 }
+
 loadNews();
 </script>
+</body>
+</html>
