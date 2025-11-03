@@ -1,132 +1,296 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-<meta charset="UTF-8">
-<title>Invexis – Comparação de ETFs com Volatilidade</title>
+<meta charset="utf-8" />
+<title>Invexis – Comparação ETFs (Zoom Temporal)</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="script.js"></script>
-  <style>
-  body {
-    font-family: Arial, sans-serif;
-    background-color: #f9f9f9;
-    margin: 0;
-    padding: 0 20px;
-    transition: transform 0.2s;
-  }
-
-  header { text-align: center; margin: 20px 0; }
-  h1 { color: #2c3e50; }
-
-  #aviso-legal {
-    background-color: #fffbdd;
-    border-left: 5px solid #f1c40f;
-    padding: 10px;
-    margin-bottom: 20px;
-  }
-
-  section {
-    background-color: white;
-    padding: 20px;
-    margin-bottom: 20px;
-    border-radius: 8px;
-    box-shadow: 0px 2px 5px rgba(0,0,0,0.1);
-  }
-
-  label { display: block; margin: 10px 0; }
-  input, select { padding: 5px; margin-left: 10px; }
-  button {
-    padding: 8px 16px;
-    background-color: #3498db;
-    border: none;
-    color: white;
-    cursor: pointer;
-    border-radius: 4px;
-    margin-top: 10px;
-  }
-  button:hover { background-color: #2980b9; }
-
-  #resultado { margin-top: 15px; font-weight: bold; }
-  #chart-container { margin-top: 20px; }
+<style>
+  body { font-family: Arial, sans-serif; background:#f9f9f9; margin:0; padding:20px; }
+  header { text-align:center; margin-bottom:18px; }
+  section { background:#fff; padding:16px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.08); margin-bottom:16px; }
+  label { display:block; margin:8px 0; }
+  input, select, button { padding:6px 8px; margin-left:6px; }
+  #controls { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  #zoomControls { display:flex; gap:8px; align-items:center; }
+  button { background:#3498db; color:#fff; border:none; border-radius:6px; cursor:pointer; }
+  button:hover { background:#2b7bb0; }
+  #resultado { margin-top:12px; font-weight:600; }
+  #chart-container { margin-top:14px; }
+  .small { font-size:0.9rem; color:#555; }
+  .legend-item { margin:4px 0; }
 </style>
 </head>
 <body>
 <header>
   <h1>Invexis</h1>
-  <p>The Axis of Capital Growth</p>
+  <p class="small">The Axis of Capital Growth — plataforma educativa e informativa</p>
 </header>
 
 <section id="aviso-legal">
-  <p>
+  <p class="small">
     A Invexis é uma plataforma educativa que oferece ferramentas de simulação financeira para fins académicos e informativos.
     Não presta aconselhamento financeiro personalizado, nem recomenda produtos de investimento.
   </p>
 </section>
 
 <section id="simulador">
-  <h2>Simulador de ETFs – Comparação</h2>
+  <h2>Simulador de ETFs – Comparação (Zoom temporal)</h2>
 
-  <label>Valor Inicial (€): <input type="number" id="capital" value="1000"></label>
-  <label>Aportes Mensais (€): <input type="number" id="aporte" value="0"></label>
-  <label>Duração (anos): <input type="number" id="anos" value="5"></label>
-  <label>Tipo de juros: 
-    <select id="tipoJuros">
-      <option value="simples">Simples</option>
-      <option value="composto">Composto</option>
-    </select>
-  </label>
+  <div id="controls">
+    <div>
+      <label>Valor Inicial (€): <input type="number" id="capital" value="1000" min="0"></label>
+      <label>Aportes Mensais (€): <input type="number" id="aporte" value="0" min="0"></label>
+      <label>Duração (anos): <input type="number" id="anos" value="5" min="1"></label>
+      <label>Tipo de juros:
+        <select id="tipoJuros">
+          <option value="simples">Simples</option>
+          <option value="composto" selected>Composto</option>
+        </select>
+      </label>
+    </div>
 
-  <label>Escolha ETFs (Ctrl/Cmd + clique para múltiplos): 
-    <select id="etf" multiple size="5">
-      <option value="sp500" data-taxa="0.10" data-vol="0.15">S&P500</option>
-      <option value="eqqq" data-taxa="0.13" data-vol="0.20">EQQQ</option>
-      <option value="vhyl" data-taxa="0.07" data-vol="0.10">VHYL</option>
-      <option value="nasdaq" data-taxa="0.12" data-vol="0.25">NASDAQ 100</option>
-      <option value="msci" data-taxa="0.09" data-vol="0.12">MSCI World</option>
-    </select>
-  </label>
+    <div>
+      <label>Escolha ETFs (Ctrl/Cmd + clique para múltiplos):</label>
+      <select id="etf" multiple size="6" style="min-width:220px;">
+        <!-- data-taxa = retorno médio anual, data-vol = volatilidade anual (desvio padrão aproximado) -->
+        <option value="sp500" data-taxa="0.10" data-vol="0.15">S&P 500</option>
+        <option value="eqqq" data-taxa="0.13" data-vol="0.20">EQQQ (Nasdaq-100)</option>
+        <option value="vhyl" data-taxa="0.07" data-vol="0.10">VHYL (High Dividend)</option>
+        <option value="nasdaq" data-taxa="0.12" data-vol="0.25">NASDAQ 100</option>
+        <option value="msci" data-taxa="0.09" data-vol="0.12">MSCI World</option>
+        <option value="stoxx" data-taxa="0.06" data-vol="0.14">Stoxx Europe 600</option>
+      </select>
+    </div>
 
-  <label>Zoom da página (0 = min, 100 = max): 
-    <input type="range" id="zoom" min="0" max="100" value="50" oninput="ajustarZoom()">
-  </label>
+    <div style="min-width:200px;">
+      <label>Zoom temporal (resolução):</label>
+      <div id="zoomControls">
+        <button id="zoomOutBtn" title="Zoom out (menos detalhe)">−</button>
+        <div id="zoomLabel" class="small" style="min-width:120px; text-align:center;"></div>
+        <button id="zoomInBtn" title="Zoom in (mais detalhe)">+</button>
+      </div>
+      <div class="small" style="margin-top:6px;">(alterar quantos meses correspondem a cada ponto do gráfico)</div>
+    </div>
+  </div>
 
-  <button onclick="calcular()">Calcular</button>
+  <div style="margin-top:12px;">
+    <button id="calcBtn">Calcular & Atualizar Gráfico</button>
+  </div>
 
   <div id="resultado"></div>
+
   <div id="chart-container">
     <canvas id="grafico"></canvas>
   </div>
 </section>
 
 <script>
-let grafico;
+/*
+  Presets de resolução (monthsPerPoint). Ordenados de mais largo -> mais fino:
+  24 => cada ponto representa 24 meses (2 anos)
+  12 => 1 ano
+  6  => 6 meses
+  3  => 3 meses
+  1  => 1 mês
+*/
+const zoomPresets = [
+  { label: '2 anos por ponto', months: 24 },
+  { label: '1 ano por ponto', months: 12 },
+  { label: '6 meses por ponto', months: 6 },
+  { label: '3 meses por ponto', months: 3 },
+  { label: '1 mês por ponto', months: 1 },
+];
+let zoomIndex = 1; // default: 1 ano por ponto
 
-function ajustarZoom(){
-  const zoomSlider = document.getElementById("zoom").value;
-  // transforma 0-100 em escala 0.5 a 1.5
-  const scale = 0.5 + (zoomSlider/100);
-  document.body.style.transform = `scale(${scale})`;
+const zoomLabel = document.getElementById('zoomLabel');
+const zoomInBtn = document.getElementById('zoomInBtn');
+const zoomOutBtn = document.getElementById('zoomOutBtn');
+const calcBtn = document.getElementById('calcBtn');
+
+function atualizarLabelZoom() {
+  zoomLabel.textContent = `${zoomPresets[zoomIndex].label} (${zoomPresets[zoomIndex].months} meses)`;
+  // desativa botões se estivermos nos limites
+  zoomInBtn.disabled = (zoomIndex === zoomPresets.length - 1);
+  zoomOutBtn.disabled = (zoomIndex === 0);
 }
-  document.getElementById("resultado").innerHTML = resultados;
+zoomInBtn.addEventListener('click', () => { if (zoomIndex < zoomPresets.length - 1) { zoomIndex++; atualizarLabelZoom(); } });
+zoomOutBtn.addEventListener('click', () => { if (zoomIndex > 0) { zoomIndex--; atualizarLabelZoom(); } });
+atualizarLabelZoom();
+
+/* Chart global */
+let grafico = null;
+
+/* Util: gera cor legível */
+function gerarCorAleatoria(alpha=1) {
+  const r = 40 + Math.floor(Math.random() * 180);
+  const g = 40 + Math.floor(Math.random() * 180);
+  const b = 40 + Math.floor(Math.random() * 180);
+  return { rgba: `rgba(${r},${g},${b},${alpha})`, rgb: `rgb(${r},${g},${b})` };
+}
+
+/*
+  Funções para calcular montante:
+  - Para composto: capital * (1 + r)^(tYears)  + aporte * ( (1 + r/12)^(months) - 1) / (r/12)
+  - Para simples: capital * (1 + r * tYears) + soma_mensal(aporte * (1 + r * remainingYears))
+    Para a soma dos aportes com juros simples: para cada aporte realizado no mês m (0..months-1),
+    a taxa simples aplicada é proporcional ao tempo restante em anos: r * ((months - m)/12).
+*/
+function futuroComposto(capital, aporte, taxaAnual, months) {
+  const r = taxaAnual;
+  const tYears = months / 12;
+  // capital cresce com juros compostos anuais (aplicamos (1+r)^tYears)
+  const capitalFuturo = capital * Math.pow(1 + r, tYears);
+  // aportes mensais capitalizados mensalmente com r/12
+  if (r === 0) {
+    // caso r=0, futuro dos aportes é simplesmente aporte * months
+    return capitalFuturo + aporte * months;
+  } else {
+    const monthlyRate = r / 12;
+    const aportesFuturo = aporte * (Math.pow(1 + monthlyRate, months) - 1) / monthlyRate;
+    return capitalFuturo + aportesFuturo;
+  }
+}
+
+function futuroSimples(capital, aporte, taxaAnual, months) {
+  const r = taxaAnual;
+  const tYears = months / 12;
+  const capitalFuturo = capital * (1 + r * tYears);
+  // soma dos aportes com juros simples: cada aporte no mês m (0..months-1)
+  // tem tempo restante (months - m) meses -> (months - m)/12 anos
+  let aportesFuturo = 0;
+  for (let m = 0; m < months; m++) {
+    const remainingYears = (months - m) / 12;
+    aportesFuturo += aporte * (1 + r * remainingYears);
+  }
+  return capitalFuturo + aportesFuturo;
+}
+
+/* Função principal: gera datasets com volatilidade e resolução temporal (monthsPerPoint) */
+function calcularDatasets(monthsPerPoint) {
+  const capital = parseFloat(document.getElementById('capital').value) || 0;
+  const aporte = parseFloat(document.getElementById('aporte').value) || 0;
+  const anos = parseInt(document.getElementById('anos').value) || 1;
+  const tipo = document.getElementById('tipoJuros').value;
+  const etfSelect = document.getElementById('etf');
+  const selecionados = Array.from(etfSelect.selectedOptions);
+
+  if (selecionados.length === 0) {
+    alert('Escolhe pelo menos um ETF.');
+    return null;
+  }
+
+  const totalMonths = anos * 12;
+  const nPoints = Math.ceil(totalMonths / monthsPerPoint);
+  const labels = [];
+  // Gera labels: se monthsPerPoint >= 12 => "Ano X", senão "MM/Y"
+  for (let p = 0; p < nPoints; p++) {
+    const monthsAtPoint = Math.min((p+1)*monthsPerPoint, totalMonths);
+    if (monthsPerPoint >= 12) {
+      const yearNum = Math.ceil(monthsAtPoint / 12);
+      labels.push(`Ano ${yearNum}`);
+    } else {
+      const approxMonth = monthsAtPoint;
+      const year = 1 + Math.floor((approxMonth - 1)/12);
+      const monthOfYear = ((approxMonth - 1) % 12) + 1;
+      labels.push(`${monthOfYear}/${year}`);
+    }
+  }
+
+  const datasets = [];
+  let resultadoTexto = '';
+
+  selecionados.forEach(op => {
+    const taxa = parseFloat(op.dataset.taxa) || 0;
+    const vol = parseFloat(op.dataset.vol) || 0.12; // volatilidade anual aproximada
+    let pointValues = [];
+
+    for (let p = 0; p < nPoints; p++) {
+      // months up to this point
+      const months = Math.min((p+1) * monthsPerPoint, totalMonths);
+
+      // cálculo base (sem ruído)
+      let montante;
+      if (tipo === 'simples') {
+        montante = futuroSimples(capital, aporte, taxa, months);
+      } else {
+        montante = futuroComposto(capital, aporte, taxa, months);
+      }
+
+      // aplicar ruído/volatilidade para tornar o gráfico menos "liso".
+      // Queremos que a amplitude da flutuação reflita a volatilidade anual e o período do ponto.
+      // Aproximação: std for period = vol * sqrt(period_in_years)
+      const periodYears = monthsPerPoint / 12;
+      const effectiveVol = vol * Math.sqrt(Math.max(periodYears, 0.0001)); // escala com sqrt
+      // gerar ruído aleatório com amplitude ~ effectiveVol, mas pequeno (usar fator)
+      // Usamos uma multiplicação por (1 + noise), onde noise ~ N(0, effectiveVol*0.5) approximated uniform.
+      const noise = (Math.random() - 0.5) * 2 * effectiveVol * 0.5; // approx ±0.5 * effVol
+      montante = montante * (1 + noise);
+
+      // garantir não-negativo
+      if (montante < 0) montante = 0;
+      pointValues.push(parseFloat(montante.toFixed(2)));
+    }
+
+    // compute final montante & lucro for result summary (using totalMonths)
+    const finalMontante = tipo === 'simples' ? futuroSimples(capital, aporte, taxa, totalMonths) : futuroComposto(capital, aporte, taxa, totalMonths);
+    const totalInvestido = capital + aporte * totalMonths;
+    const lucro = finalMontante - totalInvestido;
+
+    const color = gerarCorAleatoria();
+    datasets.push({
+      label: op.text,
+      data: pointValues,
+      borderColor: color.rgb,
+      backgroundColor: color.rgba.replace(/,1\)/, ',0.15)'),
+      tension: 0.25,
+      pointRadius: 3,
+      fill: false
+    });
+
+    resultadoTexto += `<div class="legend-item">${op.text} — Montante (estimado): €${finalMontante.toFixed(2)} • Lucro: €${lucro.toFixed(2)}</div>`;
+  });
+
+  return { labels, datasets, resultadoTexto };
+}
+
+/* Atualiza / desenha o chart */
+function atualizarGrafico() {
+  const monthsPerPoint = zoomPresets[zoomIndex].months;
+  const computed = calcularDatasets(monthsPerPoint);
+  if (!computed) return;
+
+  document.getElementById('resultado').innerHTML = computed.resultadoTexto;
 
   const ctx = document.getElementById('grafico').getContext('2d');
-  if(grafico) grafico.destroy();
+  if (grafico) grafico.destroy();
   grafico = new Chart(ctx, {
     type: 'line',
-    data: {
-      labels: Array.from({length: anos}, (_, i) => `Ano ${i+1}`),
-      datasets
-    },
-    options: { responsive: true, plugins: { legend: { display: true } } }
+    data: { labels: computed.labels, datasets: computed.datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'bottom' },
+        tooltip: { mode: 'index', intersect: false }
+      },
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        y: {
+          ticks: { callback: function(value){ return '€' + value.toLocaleString(); } }
+        }
+      }
+    }
   });
 }
 
-function gerarCorAleatoria() {
-  const r = Math.floor(Math.random() * 200);
-  const g = Math.floor(Math.random() * 200);
-  const b = Math.floor(Math.random() * 200);
-  return `rgba(${r},${g},${b},1)`;
-}
+/* Eventos */
+calcBtn.addEventListener('click', atualizarGrafico);
+/* também atualiza quando alteras zoom via botões (o listener já altera o index) */
+zoomInBtn.addEventListener('click', () => { setTimeout(atualizarGrafico, 80); });
+zoomOutBtn.addEventListener('click', () => { setTimeout(atualizarGrafico, 80); });
+
+/* Start: desenha com valores padrão */
+window.addEventListener('load', atualizarGrafico);
 </script>
 </body>
 </html>
-
