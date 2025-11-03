@@ -12,8 +12,8 @@ export default async function handler(req, res) {
     return res.json(cache.data);
   }
 
-  const key = process.env.NEWSAPI_KEY;
-  if (!key) return res.status(500).json({ error: 'API key missing' });
+ const key = process.env.NEWSAPI_KEY;
+if (!key) return res.status(500).json({ error: 'API key missing' });
 
   // Endpoint da NewsAPI: top headlines sobre finanças/mercados
   const url = `https://newsapi.org/v2/top-headlines?q=finance OR markets&language=en&pageSize=12&apiKey=${key}`;
