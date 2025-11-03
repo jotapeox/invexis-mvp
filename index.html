@@ -542,6 +542,91 @@ Copiar código
     <p class="meta">27 Outubro 2025 • Fonte: Placeholder</p>
     <p>Visão geral comparativa entre S&P 500, NASDAQ 100 e MSCI World. Aqui poderemos mostrar snapshots, correlações e links diretos para simulações na homepage.</p>
   </section>
+<!-- Widget de Preços Reais -->
+<div id="marketWidget" style="position:fixed; bottom:10px; right:10px; width:260px; background:#222; color:#eee; padding:1rem; border-radius:8px; box-shadow:0 0 12px rgba(0,0,0,0.5); font-family:Arial, sans-serif; z-index:999;">
+  <h4 style="margin-top:0; margin-bottom:0.5rem; text-align:center;">Market Highlights</h4>
+  <ul id="marketList" style="list-style:none; padding:0; margin:0;"></ul>
+
+  <!-- Atribuição CoinGecko -->
+  <div class="attribution" style="margin-top:0.5rem; font-size:0.75rem; text-align:center;">
+    <a href="https://www.coingecko.com?utm_source=Invexis&utm_medium=referral" target="_blank" rel="noopener noreferrer">
+      <img src="/path/to/coingecko-logo.svg" alt="CoinGecko Logo" style="height:16px; vertical-align:middle;">
+    </a>
+    <span style="margin-left:4px;">Data provided by CoinGecko</span>
+  </div>
+</div>
+
+<script>
+// Lista de ativos
+const cryptoIds = ['bitcoin', 'ethereum'];       // CoinGecko
+const stockSymbols = ['AMD', 'NVDA'];           // Finnhub (usa tua API key se quiseres ações)
+const finnHubKey = 'YOUR_FINNHUB_KEY';          // substitui pela tua API key se fores usar ações
+
+const marketList = document.getElementById('marketList');
+
+// Função para carregar cripto via CoinGecko
+async function loadCrypto() {
+  try {
+    const r = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cryptoIds.join(',')}&vs_currencies=usd&include_24hr_change=true`);
+    const data = await r.json();
+    cryptoIds.forEach(id => {
+      const li = document.createElement('li');
+      const change = data[id].usd_24h_change.toFixed(2);
+      li.textContent = `${id.toUpperCase()}: $${data[id].usd} (${change > 0 ? '+' : ''}${change}%)`;
+      li.style.marginBottom = '0.4rem';
+      marketList.appendChild(li);
+    });
+  } catch(e) {
+    const li = document.createElement('li');
+    li.textContent = 'Error loading crypto data';
+    marketList.appendChild(li);
+  }
+}
+
+// Função para carregar ações via Finnhub
+async function loadStocks() {
+  try {
+    for(const symbol of stockSymbols) {
+      const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${finnHubKey}`);
+      const data = await r.json();
+      const li = document.createElement('li');
+      const change = ((data.c - data.pc)/data.pc*100).toFixed(2);
+      li.textContent = `${symbol}: $${data.c} (${change > 0 ? '+' : ''}${change}%)`;
+      li.style.marginBottom = '0.4rem';
+      marketList.appendChild(li);
+    }
+  } catch(e) {
+    const li = document.createElement('li');
+    li.textContent = 'Error loading stock data';
+    marketList.appendChild(li);
+  }
+}
+
+// Atualiza mercado (crypo + stocks)
+async function loadMarket() {
+  marketList.innerHTML = ''; // limpa lista
+  await loadCrypto();
+  await loadStocks();
+}
+
+// Inicial
+loadMarket();
+// Atualiza a cada 30 segundos
+setInterval(loadMarket, 30000);
+
+// Dark/Light mode automático (opcional, baseado no tema do body)
+const observer = new MutationObserver(() => {
+  const bg = getComputedStyle(document.body).backgroundColor;
+  if(bg === 'rgb(255, 255, 255)') {
+    document.getElementById('marketWidget').style.background = '#eee';
+    document.getElementById('marketWidget').style.color = '#111';
+  } else {
+    document.getElementById('marketWidget').style.background = '#222';
+    document.getElementById('marketWidget').style.color = '#eee';
+  }
+});
+observer.observe(document.body, { attributes:true, attributeFilter:['style'] });
+</script>
 
   <section class="card">
     <div class="tag">Educação</div>
@@ -556,3 +641,4 @@ Copiar código
 </footer>
 </body>
 </html>
+
