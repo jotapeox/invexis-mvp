@@ -12,6 +12,8 @@ export default async function handler(req, res) {
 
   const key = process.env.NEWSAPI_KEY; // define no Vercel UI
   if(!key) return res.status(500).json({ error: 'API key missing' });
+  
+  }
 
   // Exemplo: top headlines financeiras, ou query q=finance
   const url = `https://newsapi.org/v2/top-headlines?q=finance OR markets&language=en&pageSize=12&apiKey=${key}`;
