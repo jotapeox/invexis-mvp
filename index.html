@@ -2,7 +2,7 @@
 <html lang="pt">
 <head>
 <meta charset="UTF-8">
-<title>Invexis – Comparação de ETFs</title>
+<title>Invexis – Comparação de ETFs com Volatilidade</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
   body {
@@ -10,6 +10,7 @@
     background-color: #f9f9f9;
     margin: 0;
     padding: 0 20px;
+    transition: transform 0.2s;
   }
 
   header { text-align: center; margin: 20px 0; }
@@ -32,7 +33,6 @@
 
   label { display: block; margin: 10px 0; }
   input, select { padding: 5px; margin-left: 10px; }
-
   button {
     padding: 8px 16px;
     background-color: #3498db;
@@ -42,7 +42,6 @@
     border-radius: 4px;
     margin-top: 10px;
   }
-
   button:hover { background-color: #2980b9; }
 
   #resultado { margin-top: 15px; font-weight: bold; }
@@ -64,6 +63,7 @@
 
 <section id="simulador">
   <h2>Simulador de ETFs – Comparação</h2>
+
   <label>Valor Inicial (€): <input type="number" id="capital" value="1000"></label>
   <label>Aportes Mensais (€): <input type="number" id="aporte" value="0"></label>
   <label>Duração (anos): <input type="number" id="anos" value="5"></label>
@@ -73,15 +73,21 @@
       <option value="composto">Composto</option>
     </select>
   </label>
+
   <label>Escolha ETFs (Ctrl/Cmd + clique para múltiplos): 
     <select id="etf" multiple size="5">
-      <option value="sp500" data-taxa="0.10">S&P500</option>
-      <option value="eqqq" data-taxa="0.13">EQQQ</option>
-      <option value="vhyl" data-taxa="0.07">VHYL</option>
-      <option value="nasdaq" data-taxa="0.12">NASDAQ 100</option>
-      <option value="msci" data-taxa="0.09">MSCI World</option>
+      <option value="sp500" data-taxa="0.10" data-vol="0.15">S&P500</option>
+      <option value="eqqq" data-taxa="0.13" data-vol="0.20">EQQQ</option>
+      <option value="vhyl" data-taxa="0.07" data-vol="0.10">VHYL</option>
+      <option value="nasdaq" data-taxa="0.12" data-vol="0.25">NASDAQ 100</option>
+      <option value="msci" data-taxa="0.09" data-vol="0.12">MSCI World</option>
     </select>
   </label>
+
+  <label>Zoom da página (0 = min, 100 = max): 
+    <input type="range" id="zoom" min="0" max="100" value="50" oninput="ajustarZoom()">
+  </label>
+
   <button onclick="calcular()">Calcular</button>
 
   <div id="resultado"></div>
@@ -92,6 +98,13 @@
 
 <script>
 let grafico;
+
+function ajustarZoom(){
+  const zoomSlider = document.getElementById("zoom").value;
+  // transforma 0-100 em escala 0.5 a 1.5
+  const scale = 0.5 + (zoomSlider/100);
+  document.body.style.transform = `scale(${scale})`;
+}
 
 function calcular() {
   const capital = parseFloat(document.getElementById("capital").value);
@@ -113,6 +126,7 @@ function calcular() {
     let montante = capital;
     const valoresAno = [];
     const taxa = parseFloat(op.dataset.taxa);
+    const vol = parseFloat(op.dataset.vol);
 
     for(let i = 1; i <= anos; i++){
       if(tipo === "simples"){
@@ -120,6 +134,11 @@ function calcular() {
       } else {
         montante = montante * (1 + taxa) + aporte*12;
       }
+
+      // aplicar volatilidade aleatória
+      const flut = (Math.random() - 0.5) * vol * 2; // ±vol anual
+      montante = montante * (1 + flut);
+
       valoresAno.push(montante.toFixed(2));
     }
 
