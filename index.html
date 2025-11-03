@@ -1,171 +1,162 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-  <meta charset="UTF-8">
-  <title>Invexis – Simulador de ETFs</title>
-  <!-- Chart.js CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    /* CSS incluído */
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f9f9f9;
-      margin: 0;
-      padding: 0 20px;
-    }
+<meta charset="UTF-8">
+<title>Invexis – Comparação de ETFs</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f9f9f9;
+    margin: 0;
+    padding: 0 20px;
+  }
 
-    header {
-      text-align: center;
-      margin: 20px 0;
-    }
+  header { text-align: center; margin: 20px 0; }
+  h1 { color: #2c3e50; }
 
-    h1 { color: #2c3e50; }
-    p { color: #2c3e50; }
+  #aviso-legal {
+    background-color: #fffbdd;
+    border-left: 5px solid #f1c40f;
+    padding: 10px;
+    margin-bottom: 20px;
+  }
 
-    #aviso-legal {
-      background-color: #fffbdd;
-      border-left: 5px solid #f1c40f;
-      padding: 10px;
-      margin-bottom: 20px;
-    }
+  section {
+    background-color: white;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0px 2px 5px rgba(0,0,0,0.1);
+  }
 
-    section {
-      background-color: white;
-      padding: 20px;
-      margin-bottom: 20px;
-      border-radius: 8px;
-      box-shadow: 0px 2px 5px rgba(0,0,0,0.1);
-    }
+  label { display: block; margin: 10px 0; }
+  input, select { padding: 5px; margin-left: 10px; }
 
-    label {
-      display: block;
-      margin: 10px 0;
-    }
+  button {
+    padding: 8px 16px;
+    background-color: #3498db;
+    border: none;
+    color: white;
+    cursor: pointer;
+    border-radius: 4px;
+    margin-top: 10px;
+  }
 
-    input, select {
-      padding: 5px;
-      margin-left: 10px;
-    }
+  button:hover { background-color: #2980b9; }
 
-    button {
-      padding: 8px 16px;
-      background-color: #3498db;
-      border: none;
-      color: white;
-      cursor: pointer;
-      border-radius: 4px;
-      margin-top: 10px;
-    }
-
-    button:hover {
-      background-color: #2980b9;
-    }
-
-    #resultado {
-      margin-top: 15px;
-      font-weight: bold;
-    }
-
-    #chart-container {
-      margin-top: 20px;
-    }
-  </style>
+  #resultado { margin-top: 15px; font-weight: bold; }
+  #chart-container { margin-top: 20px; }
+</style>
 </head>
 <body>
-  <header>
-    <h1>Invexis</h1>
-    <p>The Axis of Capital Growth</p>
-  </header>
+<header>
+  <h1>Invexis</h1>
+  <p>The Axis of Capital Growth</p>
+</header>
 
-  <section id="aviso-legal">
-    <p>
-      A Invexis é uma plataforma educativa que oferece ferramentas de simulação financeira para fins académicos e informativos.
-      Não presta aconselhamento financeiro personalizado, nem recomenda produtos de investimento.
-    </p>
-  </section>
+<section id="aviso-legal">
+  <p>
+    A Invexis é uma plataforma educativa que oferece ferramentas de simulação financeira para fins académicos e informativos.
+    Não presta aconselhamento financeiro personalizado, nem recomenda produtos de investimento.
+  </p>
+</section>
 
-  <section id="simulador">
-    <h2>Simulador de ETFs</h2>
-    <label>Valor Inicial (€): <input type="number" id="capital" value="1000"></label>
-    <label>Aportes Mensais (€): <input type="number" id="aporte" value="0"></label>
-    <label>Duração (anos): <input type="number" id="anos" value="5"></label>
-    <label>Tipo de juros: 
-      <select id="tipoJuros">
-        <option value="simples">Simples</option>
-        <option value="composto">Composto</option>
-      </select>
-    </label>
-    <label>Escolha ETF: 
-      <select id="etf">
-        <option value="sp500" data-taxa="0.10">S&P500</option>
-        <option value="eqqq" data-taxa="0.13">EQQQ</option>
-        <option value="vhyl" data-taxa="0.07">VHYL</option>
-      </select>
-    </label>
-    <button onclick="calcular()">Calcular</button>
+<section id="simulador">
+  <h2>Simulador de ETFs – Comparação</h2>
+  <label>Valor Inicial (€): <input type="number" id="capital" value="1000"></label>
+  <label>Aportes Mensais (€): <input type="number" id="aporte" value="0"></label>
+  <label>Duração (anos): <input type="number" id="anos" value="5"></label>
+  <label>Tipo de juros: 
+    <select id="tipoJuros">
+      <option value="simples">Simples</option>
+      <option value="composto">Composto</option>
+    </select>
+  </label>
+  <label>Escolha ETFs (Ctrl/Cmd + clique para múltiplos): 
+    <select id="etf" multiple size="5">
+      <option value="sp500" data-taxa="0.10">S&P500</option>
+      <option value="eqqq" data-taxa="0.13">EQQQ</option>
+      <option value="vhyl" data-taxa="0.07">VHYL</option>
+      <option value="nasdaq" data-taxa="0.12">NASDAQ 100</option>
+      <option value="msci" data-taxa="0.09">MSCI World</option>
+    </select>
+  </label>
+  <button onclick="calcular()">Calcular</button>
 
-    <div id="resultado"></div>
-    <div id="chart-container">
-      <canvas id="grafico"></canvas>
-    </div>
-  </section>
+  <div id="resultado"></div>
+  <div id="chart-container">
+    <canvas id="grafico"></canvas>
+  </div>
+</section>
 
-  <script>
-    let grafico;
+<script>
+let grafico;
 
-    function calcular() {
-      const capital = parseFloat(document.getElementById("capital").value);
-      const aporte = parseFloat(document.getElementById("aporte").value);
-      const anos = parseInt(document.getElementById("anos").value);
-      const tipo = document.getElementById("tipoJuros").value;
-      const etfSelect = document.getElementById("etf");
-      const taxa = parseFloat(etfSelect.selectedOptions[0].dataset.taxa);
+function calcular() {
+  const capital = parseFloat(document.getElementById("capital").value);
+  const aporte = parseFloat(document.getElementById("aporte").value);
+  const anos = parseInt(document.getElementById("anos").value);
+  const tipo = document.getElementById("tipoJuros").value;
+  const etfSelect = document.getElementById("etf");
+  const selecionados = Array.from(etfSelect.selectedOptions);
 
-      let montante = capital;
-      const valoresAno = [];
+  if(selecionados.length === 0){
+    alert("Escolhe pelo menos um ETF!");
+    return;
+  }
 
-      for(let i = 1; i <= anos; i++){
-        if(tipo === "simples"){
-          montante = capital + (capital * taxa * i) + (aporte * 12 * i);
-        } else {
-          montante = montante * (1 + taxa) + aporte*12;
-        }
-        valoresAno.push(montante.toFixed(2));
+  const datasets = [];
+  let resultados = "";
+
+  selecionados.forEach(op => {
+    let montante = capital;
+    const valoresAno = [];
+    const taxa = parseFloat(op.dataset.taxa);
+
+    for(let i = 1; i <= anos; i++){
+      if(tipo === "simples"){
+        montante = capital + (capital * taxa * i) + (aporte * 12 * i);
+      } else {
+        montante = montante * (1 + taxa) + aporte*12;
       }
-
-      const totalInvestido = capital + aporte*12*anos;
-      const lucro = montante - totalInvestido;
-
-      document.getElementById("resultado").innerHTML = `
-        <p>Montante Final: €${montante.toFixed(2)}</p>
-        <p>Total Investido: €${totalInvestido.toFixed(2)}</p>
-        <p>Lucro Teórico: €${lucro.toFixed(2)}</p>
-      `;
-
-      // Atualizar gráfico
-      const ctx = document.getElementById('grafico').getContext('2d');
-      if(grafico) grafico.destroy();
-      grafico = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: Array.from({length: anos}, (_, i) => `Ano ${i+1}`),
-          datasets: [{
-            label: `Projeção ${etfSelect.selectedOptions[0].text}`,
-            data: valoresAno,
-            borderColor: 'rgba(52, 152, 219,1)',
-            backgroundColor: 'rgba(52, 152, 219,0.2)',
-            fill: true,
-            tension: 0.3
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { display: true }
-          }
-        }
-      });
+      valoresAno.push(montante.toFixed(2));
     }
-  </script>
+
+    const totalInvestido = capital + aporte*12*anos;
+    const lucro = montante - totalInvestido;
+    resultados += `<p>${op.text} - Montante: €${montante.toFixed(2)}, Lucro: €${lucro.toFixed(2)}</p>`;
+
+    datasets.push({
+      label: op.text,
+      data: valoresAno,
+      borderColor: gerarCorAleatoria(),
+      backgroundColor: 'rgba(0,0,0,0.05)',
+      fill: true,
+      tension: 0.3
+    });
+  });
+
+  document.getElementById("resultado").innerHTML = resultados;
+
+  const ctx = document.getElementById('grafico').getContext('2d');
+  if(grafico) grafico.destroy();
+  grafico = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: Array.from({length: anos}, (_, i) => `Ano ${i+1}`),
+      datasets
+    },
+    options: { responsive: true, plugins: { legend: { display: true } } }
+  });
+}
+
+function gerarCorAleatoria() {
+  const r = Math.floor(Math.random() * 200);
+  const g = Math.floor(Math.random() * 200);
+  const b = Math.floor(Math.random() * 200);
+  return `rgba(${r},${g},${b},1)`;
+}
+</script>
 </body>
 </html>
