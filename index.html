@@ -1,568 +1,294 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-<meta charset="utf-8" />
-<title>Invexis – Simulador e Comparador de ETFs</title>
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
- <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Invexis | Simulador Financeiro</title>
 
-</style>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+  <style>
+    /* ---------- GERAL ---------- */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Inter", Arial, sans-serif;
+      transition: all 0.25s ease;
+    }
+
+    body {
+      background-color: #0b0f1a;
+      color: #e0e6f5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      text-align: center;
+      padding: 1.5rem;
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: #8ab4ff;
+      letter-spacing: 0.5px;
+    }
+
+    main {
+      display: flex;
+      gap: 1.5rem;
+      width: 90%;
+      max-width: 1300px;
+    }
+
+    /* ---------- LADO ESQUERDO ---------- */
+    .left-panel {
+      flex: 1;
+      background: #131b2e;
+      padding: 1.5rem;
+      border-radius: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    }
+
+    label {
+      display: block;
+      margin-top: 1rem;
+      margin-bottom: 0.3rem;
+      font-size: 0.9rem;
+      color: #a3b8ff;
+    }
+
+    select, input {
+      width: 100%;
+      padding: 0.6rem;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+      background-color: #1c2440;
+      color: #e0e6f5;
+      font-size: 0.9rem;
+    }
+
+    button {
+      margin-top: 1.2rem;
+      padding: 0.7rem 1rem;
+      background-color: #3d63ff;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #5578ff;
+    }
+
+    /* ---------- GRÁFICO ---------- */
+    .chart-container {
+      flex: 2;
+      background: #131b2e;
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    canvas {
+      width: 100% !important;
+      height: 400px !important;
+    }
+
+    /* ---------- WIDGETS ---------- */
+    .widgets {
+      flex: 1;
+      background: #131b2e;
+      border-radius: 16px;
+      padding: 1rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    }
+
+    .widget {
+      background: #1c2440;
+      padding: 0.8rem;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+    }
+
+    .widget h3 {
+      font-size: 0.95rem;
+      color: #8ab4ff;
+      margin-bottom: 0.3rem;
+    }
+
+    /* ---------- MODO CLARO ---------- */
+    body.light {
+      background-color: #f6f7fb;
+      color: #222;
+    }
+    body.light header {
+      color: #1b3da3;
+    }
+    body.light .left-panel,
+    body.light .chart-container,
+    body.light .widgets {
+      background-color: white;
+      color: #222;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    body.light select,
+    body.light input {
+      background-color: #f1f3f9;
+      color: #222;
+    }
+    body.light button {
+      background-color: #335bff;
+    }
+    body.light button:hover {
+      background-color: #476cff;
+    }
+
+    /* ---------- BOTÃO MODO ESCURO ---------- */
+    .theme-toggle {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      background: #1c2440;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+
+    body.light .theme-toggle {
+      background: #f1f3f9;
+      color: #333;
+    }
+
+  </style>
 </head>
+
 <body>
-<header>
-  <div class="brand">
-    <div class="logo">IV</div>
-    <div>
-      <h1>Invexis <span class="small">— The Axis of Capital Growth</span></h1>
-      <p class="small">Plataforma educativa de simulação financeira</p>
+  <button class="theme-toggle" id="themeToggle">🌙</button>
+
+  <header>Invexis — Simulador de Juros Compostos e ETFs</header>
+
+  <main>
+    <!-- Painel Esquerdo -->
+    <div class="left-panel">
+      <h3>Simulador</h3>
+
+      <label for="etf">Escolha o ETF:</label>
+      <select id="etf">
+        <option value="SP500">S&P 500</option>
+        <option value="EQQQ">EQQQ</option>
+        <option value="IWDA">IWDA</option>
+      </select>
+
+      <label for="capital">Capital inicial (€):</label>
+      <input type="number" id="capital" value="1000">
+
+      <label for="aporte">Aporte mensal (€):</label>
+      <input type="number" id="aporte" value="100">
+
+      <label for="anos">Anos:</label>
+      <input type="number" id="anos" value="10">
+
+      <label for="taxa">Taxa de retorno anual (%):</label>
+      <input type="number" id="taxa" value="8">
+
+      <button id="calcular">Calcular</button>
     </div>
-  </div>
 
-  <nav>
-    <a class="btn secondary" href="news.html" title="Ver notícias económicas">Economic News</a>
-    <button id="darkToggle" class="toggle" title="Ativa modo escuro">🌙 <span class="chip small" id="themeLabel">Dark</span></button>
-  </nav>
-</header>
+    <!-- Gráfico -->
+    <div class="chart-container">
+      <canvas id="myChart"></canvas>
+    </div>
 
-<main>
-  <div class="col-left">
-    <section class="card" aria-labelledby="sim-title">
-      <h2 id="sim-title">Simulador & Comparador de ETFs</h2>
-      <p class="small">Escolhe parâmetros, seleciona 1 ou mais ETFs e explora projeções com volatilidade simulada. Tudo com caráter educativo.</p>
-
-      <div class="controls-grid" style="margin-top:12px;">
-        <div>
-          <label>Valor Inicial (€):
-            <input id="capital" type="number" value="1000" min="0" step="1">
-            <span class="tooltip info" data-tip="Capital investido hoje.">i</span>
-          </label>
-          <label>Aportes Mensais (€):
-            <input id="aporte" type="number" value="0" min="0" step="1">
-            <span class="tooltip info" data-tip="Valor que adicionas todo mês.">i</span>
-          </label>
-          <label>Duração (anos):
-            <input id="anos" type="number" value="10" min="1" step="1">
-            <span class="tooltip info" data-tip="Horizonte da simulação.">i</span>
-          </label>
-          <label>Tipo de juros:
-            <select id="tipoJuros">
-              <option value="composto" selected>Composto</option>
-              <option value="simples">Simples</option>
-            </select>
-            <span class="tooltip info" data-tip="Juros compostos aplicam rendimentos sobre rendimentos.">i</span>
-          </label>
-        </div>
-
-        <div>
-          <label>Escolha ETFs (Ctrl/Cmd + clique para múltiplos):
-            <select id="etf" multiple size="6" style="width:100%; min-height:150px;">
-              <option value="sp500" data-taxa="0.10" data-vol="0.15">S&P 500</option>
-              <option value="eqqq" data-taxa="0.13" data-vol="0.20">EQQQ (Nasdaq-100)</option>
-              <option value="vhyl" data-taxa="0.07" data-vol="0.10">VHYL (High Dividend)</option>
-              <option value="nasdaq" data-taxa="0.12" data-vol="0.25">NASDAQ 100</option>
-              <option value="msci" data-taxa="0.09" data-vol="0.12">MSCI World</option>
-              <option value="stoxx" data-taxa="0.06" data-vol="0.14">Stoxx Europe 600</option>
-            </select>
-            <span class="tooltip info" data-tip="Seleciona um ou mais ETFs para comparar.">i</span>
-          </label>
-
-          <div style="margin-top:8px;">
-            <div class="presets" role="tablist" aria-label="Presets rápidos">
-              <button class="preset-btn" data-years="5">5 anos</button>
-              <button class="preset-btn active" data-years="10">10 anos</button>
-              <button class="preset-btn" data-years="20">20 anos</button>
-              <button class="preset-btn" data-years="30">30 anos</button>
-            </div>
-            <div class="small" style="margin-top:6px;">Presets: atualizam o campo <strong>Duração</strong> com 1 clique.</div>
-          </div>
-        </div>
+    <!-- Widgets -->
+    <div class="widgets">
+      <div class="widget">
+        <h3>Bitcoin (BTC)</h3>
+        <p id="btcPrice">A carregar...</p>
       </div>
-
-      <div id="controls" style="margin-top:12px; display:flex; justify-content:space-between; align-items:center;">
-        <div>
-          <div id="zoomControls">
-            <button id="zoomOutBtn" class="zoom-btn" title="Zoom out (menos detalhe)">−</button>
-            <div id="zoomLabel" class="small" style="min-width:150px; text-align:center;"></div>
-            <button id="zoomInBtn" class="zoom-btn" title="Zoom in (mais detalhe)">+</button>
-            <button id="resetZoom" class="zoom-btn" title="Reset view">⟲</button>
-          </div>
-          <div class="small" style="margin-top:6px;">Zoom temporal controla a resolução (p.ex. 1 ponto = 6 meses).</div>
-        </div>
-
-        <div style="display:flex; gap:8px; align-items:center;">
-          <button id="calcBtn">Calcular</button>
-          <button id="shareBtn" class="btn secondary" title="Gerar link partilhável">Partilhar</button>
-          <button id="exportCsvBtn" class="btn secondary" title="Exportar dados CSV">Export CSV</button>
-          <button id="exportPngBtn" class="btn secondary" title="Exportar imagem PNG">Export PNG</button>
-        </div>
+      <div class="widget">
+        <h3>NVIDIA (NVDA)</h3>
+        <p id="nvdaPrice">A carregar...</p>
       </div>
-
-      <div id="chart-area" style="margin-top:12px;">
-        <section class="card" style="padding:8px;">
-          <div id="chart-container"><canvas id="grafico"></canvas></div>
-        </section>
+      <div class="widget">
+        <h3>Meta (META)</h3>
+        <p id="metaPrice">A carregar...</p>
       </div>
+    </div>
+  </main>
 
-    </section>
-  </div>
-
-  <aside class="right">
-    <section class="card summary" aria-labelledby="summary-h">
-      <h3 id="summary-h">Resumo rápido</h3>
-      <div id="resultado" class="small">Executa a simulação para ver resultados.</div>
-    </section>
-
-    <section class="card summary">
-      <h4>Microcopy & Ajuda</h4>
-      <div class="small">
-        <div style="margin-bottom:8px;"><strong>Tooltips rápidos</strong> — passa o rato sobre <span class="info">i</span> para explicações. Essas ajudam estudantes a entender termos sem sair da página.</div>
-        <div><strong>Exportar</strong> — guarda os dados ou exporta uma imagem do gráfico para apresentações.</div>
-      </div>
-    </section>
-
-    <section class="card summary">
-      <h4>Atalhos rápidos</h4>
-      <div class="small">• Ctrl/Cmd + clique para seleção múltipla de ETFs<br>• Use presets para alterar horizontes rapidamente</div>
-    </section>
-  </aside>
-</main>
-
-<footer>
-  <div class="small">Invexis — Plataforma educativa. As projeções são ilustrativas e não constituem aconselhamento financeiro.</div>
-</footer>
-
-<script>
-/* ========== Setup zoom presets (months per point) ========== */
-const zoomPresets = [
-  { label: '2 anos por ponto', months: 24 },
-  { label: '1 ano por ponto', months: 12 },
-  { label: '6 meses por ponto', months: 6 },
-  { label: '3 meses por ponto', months: 3 },
-  { label: '1 mês por ponto', months: 1 },
-];
-let zoomIndex = 1; // default 1 ano por ponto
-
-const zoomLabel = document.getElementById('zoomLabel');
-const zoomInBtn = document.getElementById('zoomInBtn');
-const zoomOutBtn = document.getElementById('zoomOutBtn');
-const resetZoomBtn = document.getElementById('resetZoom');
-
-function atualizarLabelZoom() {
-  zoomLabel.textContent = `${zoomPresets[zoomIndex].label} (${zoomPresets[zoomIndex].months} meses)`;
-  zoomInBtn.disabled = (zoomIndex === zoomPresets.length - 1);
-  zoomOutBtn.disabled = (zoomIndex === 0);
-}
-zoomInBtn.addEventListener('click', () => { if (zoomIndex < zoomPresets.length - 1) { zoomIndex++; atualizarLabelZoom(); atualizarGrafico(); } });
-zoomOutBtn.addEventListener('click', () => { if (zoomIndex > 0) { zoomIndex--; atualizarLabelZoom(); atualizarGrafico(); } });
-resetZoomBtn.addEventListener('click', () => { zoomIndex = 1; atualizarLabelZoom(); atualizarGrafico(); });
-atualizarLabelZoom();
-
-/* ========== Theme toggle (dark mode) ========== */
-const darkToggle = document.getElementById('darkToggle');
-const themeLabel = document.getElementById('themeLabel');
-function setDark(enable){
-  if(enable){ document.documentElement.classList.add('dark'); document.body.classList.add('dark'); themeLabel.textContent = 'On'; }
-  else { document.documentElement.classList.remove('dark'); document.body.classList.remove('dark'); themeLabel.textContent = 'Off'; }
-}
-// try to respect system preference:
-const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-setDark(prefersDark);
-darkToggle.addEventListener('click', () => { setDark(!document.body.classList.contains('dark')); });
-
-/* ========== Presets quick buttons ========== */
-document.querySelectorAll('.preset-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    const years = parseInt(btn.dataset.years,10) || 10;
-    document.getElementById('anos').value = years;
-    atualizarGrafico();
-  });
-});
-
-/* ========== Chart and simulation logic (with corrected formulas) ========== */
-let grafico = null;
-function gerarCorAleatoria(alpha=1){
-  const r = 40 + Math.floor(Math.random()*170);
-  const g = 40 + Math.floor(Math.random()*170);
-  const b = 40 + Math.floor(Math.random()*170);
-  return { rgba: `rgba(${r},${g},${b},${alpha})`, rgb: `rgb(${r},${g},${b})` };
-}
-
-/* Formula: futuroComposto e futuroSimples implementadas corretamente */
-function futuroComposto(capital, aporte, taxaAnual, months){
-  const r = taxaAnual;
-  const tYears = months/12;
-  // capital inicial com juros compostos anuais (aplicação contínua por fração de ano aproximada com pow)
-  const capitalFuturo = capital * Math.pow(1 + r, tYears);
-  if (r === 0){
-    return capitalFuturo + aporte * months;
-  } else {
-    const monthlyRate = r/12;
-    const aportesFuturo = aporte * (Math.pow(1 + monthlyRate, months) - 1) / monthlyRate;
-    return capitalFuturo + aportesFuturo;
-  }
-}
-
-function futuroSimples(capital, aporte, taxaAnual, months){
-  const r = taxaAnual;
-  const tYears = months/12;
-  const capitalFuturo = capital * (1 + r * tYears);
-  let aportesFuturo = 0;
-  // para cada aporte mensal, aplica juros simples proporcional ao tempo restante
-  for (let m=0; m<months; m++){
-    const remainingYears = (months - m) / 12;
-    aportesFuturo += aporte * (1 + r * remainingYears);
-  }
-  return capitalFuturo + aportesFuturo;
-}
-
-/* Gera datasets (com volatilidade aplicada de forma estatística) */
-function calcularDatasets(monthsPerPoint) {
-  const capital = parseFloat(document.getElementById('capital').value) || 0;
-  const aporte = parseFloat(document.getElementById('aporte').value) || 0;
-  const anos = parseInt(document.getElementById('anos').value) || 1;
-  const tipo = document.getElementById('tipoJuros').value;
-  const etfSelect = document.getElementById('etf');
-  const selecionados = Array.from(etfSelect.selectedOptions);
-  if (selecionados.length === 0) { alert('Escolhe pelo menos um ETF.'); return null; }
-
-  const totalMonths = anos * 12;
-  const nPoints = Math.ceil(totalMonths / monthsPerPoint);
-  const labels = [];
-  for (let p=0; p<nPoints; p++){
-    const monthsAtPoint = Math.min((p+1)*monthsPerPoint, totalMonths);
-    if (monthsPerPoint >= 12) {
-      const yearNum = Math.ceil(monthsAtPoint / 12);
-      labels.push(`Ano ${yearNum}`);
-    } else {
-      const approxMonth = monthsAtPoint;
-      const year = 1 + Math.floor((approxMonth - 1)/12);
-      const monthOfYear = ((approxMonth - 1)%12)+1;
-      labels.push(`${monthOfYear}/${year}`);
-    }
-  }
-
-  const datasets = [];
-  let resultadoTexto = '';
-
-  selecionados.forEach(op => {
-    const taxa = parseFloat(op.dataset.taxa) || 0;
-    const vol = parseFloat(op.dataset.vol) || 0.12;
-    const points = [];
-
-    for (let p=0; p<nPoints; p++){
-      const months = Math.min((p+1)*monthsPerPoint, totalMonths);
-      let montanteBase = (tipo === 'simples')
-        ? futuroSimples(capital, aporte, taxa, months)
-        : futuroComposto(capital, aporte, taxa, months);
-
-      // volatilidade: escala com sqrt(periodYears)
-      const periodYears = monthsPerPoint / 12;
-      const effectiveVol = vol * Math.sqrt(Math.max(periodYears, 0.0001));
-      // gerar ruído tipo GBM small approx: multiplicative noise
-      const noise = (randomNormal() * effectiveVol) * 0.6; // reduzir amplitude
-      const montanteNoisy = Math.max(0, montanteBase * (1 + noise));
-      points.push(parseFloat(montanteNoisy.toFixed(2)));
-    }
-
-    const finalMontante = (tipo === 'simples') ? futuroSimples(capital, aporte, taxa, totalMonths) : futuroComposto(capital, aporte, taxa, totalMonths);
-    const totalInvestido = capital + aporte * totalMonths;
-    const lucro = finalMontante - totalInvestido;
-
-    const color = gerarCorAleatoria();
-    datasets.push({
-      label: op.text,
-      data: points,
-      borderColor: color.rgb,
-      backgroundColor: color.rgba.replace(/,1\)/, ',0.12)'),
-      tension: 0.22,
-      pointRadius: 3,
-      fill: false
+  <script>
+    /* ---------- TEMA ESCURO / CLARO ---------- */
+    const toggleBtn = document.getElementById('themeToggle');
+    const body = document.body;
+    toggleBtn.addEventListener('click', () => {
+      body.classList.toggle('light');
+      toggleBtn.textContent = body.classList.contains('light') ? '☀️' : '🌙';
     });
 
-    resultadoTexto += `<div class="legend-item">${op.text} — Montante estimado: €${finalMontante.toFixed(2)} • Lucro: €${lucro.toFixed(2)}</div>`;
-  });
+    /* ---------- SIMULADOR ---------- */
+    const ctx = document.getElementById('myChart').getContext('2d');
+    let chart;
 
-  return { labels, datasets, resultadoTexto };
-}
+    document.getElementById('calcular').addEventListener('click', () => {
+      const capital = parseFloat(document.getElementById('capital').value);
+      const aporte = parseFloat(document.getElementById('aporte').value);
+      const anos = parseInt(document.getElementById('anos').value);
+      const taxa = parseFloat(document.getElementById('taxa').value) / 100;
 
-/* Random normal generator (Box-Muller) */
-function randomNormal(){
-  let u = 0, v = 0;
-  while(u === 0) u = Math.random();
-  while(v === 0) v = Math.random();
-  return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
-}
+      const valoresAno = [];
+      let montante = capital;
+      for (let i = 1; i <= anos; i++) {
+        montante = montante * (1 + taxa) + aporte * 12;
+        valoresAno.push(montante.toFixed(2));
+      }
 
-/* Draw/update chart */
-function atualizarGrafico(){
-  const monthsPerPoint = zoomPresets[zoomIndex].months;
-  const computed = calcularDatasets(monthsPerPoint);
-  if (!computed) return;
-  document.getElementById('resultado').innerHTML = computed.resultadoTexto;
+      const labels = Array.from({length: anos}, (_, i) => `${i+1}º Ano`);
 
-  const ctx = document.getElementById('grafico').getContext('2d');
-  if (grafico) grafico.destroy();
-  grafico = new Chart(ctx, {
-    type: 'line',
-    data: { labels: computed.labels, datasets: computed.datasets },
-    options: {
-      responsive:true, maintainAspectRatio:false,
-      plugins: {
-        legend: { display:true, position:'bottom' },
-        tooltip: {
-          mode: 'index',
-          intersect: false,
-          callbacks: {
-            label: function(context){
-              const v = context.raw;
-              const label = context.dataset.label || '';
-              return `${label}: €${Number(v).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`;
-            },
-            afterBody: function(items){
-              // add small educational microcopy
-              return ['Projeção ilustrativa • Não é aconselhamento'];
-            }
+      if (chart) chart.destroy();
+
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Crescimento do investimento (€)',
+            data: valoresAno,
+            borderColor: '#3d63ff',
+            tension: 0.25,
+            fill: true,
+            backgroundColor: 'rgba(61,99,255,0.1)'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true }
           }
         }
-      },
-      interaction: { mode:'index', intersect:false },
-      scales: {
-        y: {
-          ticks: { callback: v => '€' + Number(v).toLocaleString() }
-        }
-      },
-      animation: { duration: 600, easing: 'easeOutQuart' }
-    }
-  });
-}
-
-/* Export CSV */
-function exportCSV(){
-  const monthsPerPoint = zoomPresets[zoomIndex].months;
-  const computed = calcularDatasets(monthsPerPoint);
-  if(!computed) return;
-  const labels = computed.labels;
-  const rows = [ ['Periodo', ...computed.datasets.map(d=>d.label)] ];
-  for (let i=0; i<labels.length; i++){
-    const row = [ labels[i] ];
-    computed.datasets.forEach(d => row.push(d.data[i] ?? ''));
-    rows.push(row);
-  }
-  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'invexis_simulation.csv'; a.click();
-  URL.revokeObjectURL(url);
-}
-
-/* Export PNG */
-function exportPNG(){
-  if(!grafico) { alert('Gera o gráfico antes de exportar.'); return; }
-  const url = grafico.toBase64Image();
-  const a = document.createElement('a');
-  a.href = url; a.download = 'invexis_chart.png'; a.click();
-}
-
-/* Share link (serialize state into query string) */
-function shareLink(){
-  const params = new URLSearchParams();
-  params.set('capital', document.getElementById('capital').value || 0);
-  params.set('aporte', document.getElementById('aporte').value || 0);
-  params.set('anos', document.getElementById('anos').value || 10);
-  params.set('tipo', document.getElementById('tipoJuros').value || 'composto');
-  params.set('zoom', zoomIndex);
-  const sel = Array.from(document.getElementById('etf').selectedOptions).map(o=>o.value).join(',');
-  params.set('etfs', sel);
-  const url = location.origin + location.pathname + '?' + params.toString();
-  navigator.clipboard.writeText(url).then(()=> alert('Link copiado para a área de transferência!'), ()=> prompt('Copia manualmente o link:', url));
-}
-
-/* Load from query string on start (so share links work) */
-function loadFromQuery(){
-  const qs = new URLSearchParams(location.search);
-  if(qs.has('capital')) document.getElementById('capital').value = qs.get('capital');
-  if(qs.has('aporte')) document.getElementById('aporte').value = qs.get('aporte');
-  if(qs.has('anos')) document.getElementById('anos').value = qs.get('anos');
-  if(qs.has('tipo')) document.getElementById('tipoJuros').value = qs.get('tipo');
-  if(qs.has('zoom')) { const z = parseInt(qs.get('zoom'),10); if(!isNaN(z) && z>=0 && z<zoomPresets.length) zoomIndex = z; atualizarLabelZoom(); }
-  if(qs.has('etfs')) {
-    const vals = qs.get('etfs').split(',');
-    const sel = document.getElementById('etf');
-    Array.from(sel.options).forEach(opt => { opt.selected = vals.includes(opt.value); });
-  }
-}
-
-/* Hook buttons */
-document.getElementById('calcBtn').addEventListener('click', atualizarGrafico);
-document.getElementById('exportCsvBtn').addEventListener('click', exportCSV);
-document.getElementById('exportPngBtn').addEventListener('click', exportPNG);
-document.getElementById('shareBtn').addEventListener('click', shareLink);
-
-/* Init: load any query params and draw */
-loadFromQuery();
-window.addEventListener('load', atualizarGrafico);
-</script>
-</body>
-</html>
-2) news.html (Economic News — nome curto e direto)
-Página estática com estrutura pensada para integrar feed atual mais tarde (via API/serverless). Agora mostra artigos fictícios e placeholders — prontos para actualização.
-
-<!DOCTYPE html>
-<html lang="pt">
-<head>
-<meta charset="utf-8" />
-<title>Invexis — Economic News</title>
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<style>
-  body { font-family:Inter, Arial; margin:0; padding:20px; background:#f6f8fa; color:#111827; }
-  header { display:flex; justify-content:space-between; align-items:center; max-width:980px; margin:0 auto 18px; }
-  h1 { margin:0; font-size:1.1rem; }
-  main { max-width:980px; margin:0 auto; }
-  .card { background:white; padding:14px; border-radius:10px; box-shadow:0 6px 20px rgba(16,24,40,0.06); margin-bottom:12px; }
-  .meta { color:#6b7280; font-size:0.9rem; }
-  .tag { display:inline-block; padding:4px 8px; border-radius:6px; background:#eef2ff; color:#3730a3; font-weight:600; margin-right:8px; font-size:0.8rem; }
-  footer { color:#6b7280; text-align:center; margin-top:18px; }
-  a.back { color:#2563eb; text-decoration:none; font-weight:600; }
-</style>
-</head>
-<body>
-<header>
-  <div>
-    <h1>Economic News</h1>
-    <p class="meta">Notícias económicas e updates — secção educacional (placeholder para integração real).</p>
-  </div>
-  <div><a href="index.html" class="back">← Voltar ao Simulador</a></div>
-</header>
-
-<main>
-  <section class="card">
-    <div class="tag">Macro</div>
-    <h2>Resumo semanal: mercados globais e tendências</h2>
-    <p class="meta">3 Novembro 2025 • Fonte: Placeholder</p>
-    <p>Breve resumo das variáveis macro mais relevantes — taxas de juro, inflação e impacto sobre índices. Esta página é um placeholder para conteúdo curado; futuramente podemos integrar um feed real via API e mostrar gráficos históricos diretamente aqui.</p>
-  </section>
-
-  <section class="card">
-    <div class="tag">ETFs</div>
-    <h2>ETF spotlight: desempenho dos índices nos últimos 12 meses</h2>
-    <p class="meta">27 Outubro 2025 • Fonte: Placeholder</p>
-    <p>Visão geral comparativa entre S&P 500, NASDAQ 100 e MSCI World. Aqui poderemos mostrar snapshots, correlações e links diretos para simulações na homepage.</p>
-  </section>
-  
-<!-- Widget de Preços Reais -->
-<div id="marketWidget" style="
-  position:fixed; 
-  bottom:10px; 
-  right:10px; 
-  width:260px; 
-  background:#0b1220; 
-  color:#fff; 
-  padding:1rem; 
-  border-radius:10px; 
-  box-shadow:0 0 14px rgba(0,0,0,0.6); 
-  font-family:Arial, sans-serif; 
-  z-index:999;
-">
-  <h4 style="margin-top:0; margin-bottom:0.6rem; text-align:center; color:#9fc3ff;">Market Highlights</h4>
-  <ul id="marketList" style="list-style:none; padding:0; margin:0; font-size:0.9rem;"></ul>
-
-  <!-- Atribuição CoinGecko -->
-  <div style="margin-top:0.7rem; font-size:0.7rem; text-align:center; opacity:0.7;">
-    <a href="https://www.coingecko.com?utm_source=Invexis&utm_medium=referral" 
-       target="_blank" rel="noopener noreferrer" 
-       style="color:#9fc3ff; text-decoration:none;">
-      <img src="/path/to/coingecko-logo.svg" alt="CoinGecko" style="height:14px; vertical-align:middle;">
-      <span style="margin-left:4px;">Data from CoinGecko</span>
-    </a>
-  </div>
-</div>
-
-<script>
-// Ativos
-const cryptoIds = ['bitcoin', 'ethereum'];
-const stockSymbols = ['AMD', 'NVDA'];
-const finnHubKey = 'd45su2hr01qieo4rq580d45su2hr01qieo4rq58g'; // substitui pela tua chave se quiseres ações
-const marketList = document.getElementById('marketList');
-
-async function loadCrypto() {
-  try {
-    const r = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cryptoIds.join(',')}&vs_currencies=usd&include_24hr_change=true`);
-    const data = await r.json();
-    cryptoIds.forEach(id => {
-      const price = data[id].usd;
-      const change = data[id].usd_24h_change.toFixed(2);
-      const li = document.createElement('li');
-      li.innerHTML = `
-        <span style="font-weight:600;">${id.toUpperCase()}</span> 
-        <span style="float:right; color:${change >= 0 ? '#3fb950' : '#f85149'};">
-          $${price.toLocaleString()} (${change > 0 ? '+' : ''}${change}%)
-        </span>
-      `;
-      li.style.marginBottom = '0.5rem';
-      marketList.appendChild(li);
+      });
     });
-  } catch {
-    const li = document.createElement('li');
-    li.textContent = 'Erro ao carregar criptos';
-    marketList.appendChild(li);
-  }
-}
 
-async function loadStocks() {
-  try {
-    for (const symbol of stockSymbols) {
-      const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${finnHubKey}`);
-      const data = await r.json();
-      const change = ((data.c - data.pc) / data.pc * 100).toFixed(2);
-      const li = document.createElement('li');
-      li.innerHTML = `
-        <span style="font-weight:600;">${symbol}</span> 
-        <span style="float:right; color:${change >= 0 ? '#3fb950' : '#f85149'};">
-          $${data.c} (${change > 0 ? '+' : ''}${change}%)
-        </span>
-      `;
-      li.style.marginBottom = '0.5rem';
-      marketList.appendChild(li);
+    /* ---------- PREÇOS (EXEMPLO SEM API) ---------- */
+    async function updatePrices() {
+      // Exemplo: simulação estática
+      document.getElementById('btcPrice').textContent = "€64,200";
+      document.getElementById('nvdaPrice').textContent = "€1,050";
+      document.getElementById('metaPrice').textContent = "€510";
     }
-  } catch {
-    const li = document.createElement('li');
-    li.textContent = 'Erro ao carregar ações';
-    marketList.appendChild(li);
-  }
-}
-
-async function loadMarket() {
-  marketList.innerHTML = '';
-  await loadCrypto();
-  await loadStocks();
-}
-
-loadMarket();
-setInterval(loadMarket, 30000);
-</script>
-  <section class="card">
-    <div class="tag">Educação</div>
-    <h2>Como interpretar volatilidade e drawdown</h2>
-    <p class="meta">15 Outubro 2025 • Fonte: Placeholder</p>
-    <p>Artigo explicativo curto para ajudar os utilizadores a interpretar o output do simulador e a diferença entre retorno médio e risco.</p>
-  </section>
-</main>
-
-<footer>
-  <p>Invexis — Secção de notícias para fins educativos. Integração de feed real planeada.</p>
-</footer>
+    updatePrices();
+  </script>
 </body>
 </html>
-
-
-
-
-
-
