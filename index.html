@@ -499,8 +499,6 @@ window.addEventListener('load', atualizarGrafico);
 2) news.html (Economic News — nome curto e direto)
 Página estática com estrutura pensada para integrar feed atual mais tarde (via API/serverless). Agora mostra artigos fictícios e placeholders — prontos para actualização.
 
-html
-Copiar código
 <!DOCTYPE html>
 <html lang="pt">
 <head>
@@ -634,21 +632,6 @@ async function loadMarket() {
 loadMarket();
 setInterval(loadMarket, 30000);
 </script>
-
-// Dark/Light mode automático (opcional, baseado no tema do body)
-const observer = new MutationObserver(() => {
-  const bg = getComputedStyle(document.body).backgroundColor;
-  if(bg === 'rgb(255, 255, 255)') {
-    document.getElementById('marketWidget').style.background = '#eee';
-    document.getElementById('marketWidget').style.color = '#111';
-  } else {
-    document.getElementById('marketWidget').style.background = '#222';
-    document.getElementById('marketWidget').style.color = '#eee';
-  }
-});
-observer.observe(document.body, { attributes:true, attributeFilter:['style'] });
-</script>
-
   <section class="card">
     <div class="tag">Educação</div>
     <h2>Como interpretar volatilidade e drawdown</h2>
@@ -662,5 +645,6 @@ observer.observe(document.body, { attributes:true, attributeFilter:['style'] });
 </footer>
 </body>
 </html>
+
 
 
