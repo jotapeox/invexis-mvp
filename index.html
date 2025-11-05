@@ -1,294 +1,557 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Invexis | Simulador Financeiro</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Invexis — Simulador (fórmulas corrigidas) + Market Widget</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  /* ---------- RESET & TIPOGRAFIA ---------- */
+  *{box-sizing:border-box;margin:0;padding:0;font-family:Inter,Arial,sans-serif}
+  :root{
+    --bg:#0b1220; --card:#0f1630; --muted:#9aa9bf; --accent:#74b3ff; --positive:#3fb950; --negative:#f85149;
+    --card-2:#151a33; --glass: rgba(255,255,255,0.03);
+  }
+  body{background:var(--bg);color:#e6eef8;min-height:100vh;padding:18px;transition:background .18s,color .18s}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:1200px;margin:0 auto 18px}
+  .brand{display:flex;gap:12px;align-items:center}
+  .logo{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent),#06b6d4);font-weight:700;color:#042237}
+  h1{font-size:1.05rem}
+  .small{font-size:0.9rem;color:var(--muted)}
 
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  /* ---------- LAYOUT ---------- */
+  .wrap{max-width:1200px;margin:0 auto;display:flex;gap:18px;align-items:flex-start}
+  .left{flex:1;min-width:300px}
+  .center{flex:2;min-width:640px}
+  .right{width:320px}
 
-  <style>
-    /* ---------- GERAL ---------- */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: "Inter", Arial, sans-serif;
-      transition: all 0.25s ease;
-    }
+  .card{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 8px 30px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03)}
+  .card + .card{margin-top:14px}
 
-    body {
-      background-color: #0b0f1a;
-      color: #e0e6f5;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+  label{display:block;color:#cfe3ff;margin-bottom:6px;font-size:0.92rem}
+  input[type=number], select, input[type=text]{width:100%;padding:8px;border-radius:8px;border:none;background:var(--card-2);color:inherit}
+  .row{display:flex;gap:8px}
+  .row > *{flex:1}
+  button{background:linear-gradient(90deg,var(--accent),#3d63ff);border:none;color:#001; padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:700}
+  button.ghost{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.04)}
+  .muted{color:var(--muted);font-size:0.9rem}
 
-    header {
-      text-align: center;
-      padding: 1.5rem;
-      font-size: 1.6rem;
-      font-weight: 600;
-      color: #8ab4ff;
-      letter-spacing: 0.5px;
-    }
+  /* chart container */
+  #chartCard{height:520px;display:flex;flex-direction:column;padding:12px}
+  #chartArea{flex:1;min-height:420px;position:relative}
+  canvas{width:100% !important;height:100% !important}
 
-    main {
-      display: flex;
-      gap: 1.5rem;
-      width: 90%;
-      max-width: 1300px;
-    }
+  /* widgets */
+  .widget-list{display:flex;flex-direction:column;gap:12px}
+  .widget{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.02)}
+  .widget h4{color:var(--accent);margin-bottom:6px;font-size:0.95rem}
+  .widget p{color:#d8e7ff;font-size:0.95rem}
 
-    /* ---------- LADO ESQUERDO ---------- */
-    .left-panel {
-      flex: 1;
-      background: #131b2e;
-      padding: 1.5rem;
-      border-radius: 16px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-    }
+  /* microcopy tooltip */
+  .info{display:inline-block;margin-left:8px;width:18px;height:18px;border-radius:6px;background:rgba(255,255,255,0.03);color:var(--muted);text-align:center;line-height:18px;font-size:12px;cursor:help;position:relative}
+  .info[data-tip]:hover:after{
+    content: attr(data-tip);
+    position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% + 8px);
+    background:#001826;color:#dff3ff;padding:8px;border-radius:8px;white-space:nowrap;font-size:13px;z-index:50
+  }
 
-    label {
-      display: block;
-      margin-top: 1rem;
-      margin-bottom: 0.3rem;
-      font-size: 0.9rem;
-      color: #a3b8ff;
-    }
+  /* market widget (fixed) */
+  #marketWidget{position:fixed;right:12px;bottom:12px;width:280px;border-radius:12px;z-index:999;background:#071122;border:1px solid rgba(255,255,255,0.03);padding:10px}
+  #marketWidget h5{color:var(--accent);margin-bottom:8px;text-align:center}
+  #marketList{list-style:none;padding:0;margin:0}
+  #marketList li{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed rgba(255,255,255,0.02);font-size:0.92rem}
+  #marketList li:last-child{border-bottom:none}
+  .cg-attr{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:8px;font-size:12px;color:var(--muted)}
+  .cg-attr img{height:14px}
 
-    select, input {
-      width: 100%;
-      padding: 0.6rem;
-      border-radius: 8px;
-      border: none;
-      outline: none;
-      background-color: #1c2440;
-      color: #e0e6f5;
-      font-size: 0.9rem;
-    }
+  /* inputs small */
+  .small-input{padding:6px;border-radius:8px;background:var(--card-2);border:none;color:inherit}
 
-    button {
-      margin-top: 1.2rem;
-      padding: 0.7rem 1rem;
-      background-color: #3d63ff;
-      border: none;
-      border-radius: 8px;
-      color: white;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #5578ff;
-    }
+  /* responsive */
+  @media (max-width:1100px){
+    .wrap{flex-direction:column;padding:8px}
+    .right{width:100%}
+    #marketWidget{display:none} /* hide floating widget on small screens */
+  }
 
-    /* ---------- GRÁFICO ---------- */
-    .chart-container {
-      flex: 2;
-      background: #131b2e;
-      border-radius: 16px;
-      padding: 1.5rem;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-
-    canvas {
-      width: 100% !important;
-      height: 400px !important;
-    }
-
-    /* ---------- WIDGETS ---------- */
-    .widgets {
-      flex: 1;
-      background: #131b2e;
-      border-radius: 16px;
-      padding: 1rem;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-    }
-
-    .widget {
-      background: #1c2440;
-      padding: 0.8rem;
-      border-radius: 10px;
-      margin-bottom: 1rem;
-    }
-
-    .widget h3 {
-      font-size: 0.95rem;
-      color: #8ab4ff;
-      margin-bottom: 0.3rem;
-    }
-
-    /* ---------- MODO CLARO ---------- */
-    body.light {
-      background-color: #f6f7fb;
-      color: #222;
-    }
-    body.light header {
-      color: #1b3da3;
-    }
-    body.light .left-panel,
-    body.light .chart-container,
-    body.light .widgets {
-      background-color: white;
-      color: #222;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    body.light select,
-    body.light input {
-      background-color: #f1f3f9;
-      color: #222;
-    }
-    body.light button {
-      background-color: #335bff;
-    }
-    body.light button:hover {
-      background-color: #476cff;
-    }
-
-    /* ---------- BOTÃO MODO ESCURO ---------- */
-    .theme-toggle {
-      position: fixed;
-      top: 1rem;
-      right: 1rem;
-      background: #1c2440;
-      color: #fff;
-      border: none;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      cursor: pointer;
-      font-size: 1.2rem;
-    }
-
-    body.light .theme-toggle {
-      background: #f1f3f9;
-      color: #333;
-    }
-
-  </style>
+  /* light mode (toggle) */
+  body.light{
+    --bg:#f6f8ff; --card:#fff; --card-2:#f1f4ff; --muted:#44566f; --accent:#0c61ff; --positive:#0f974d; --negative:#e23b3b;
+    background:var(--bg); color:#09203a;
+  }
+  body.light .card{box-shadow:0 6px 18px rgba(2,6,23,0.04)}
+  body.light input, body.light select{background:#fff;color:inherit}
+</style>
 </head>
-
 <body>
-  <button class="theme-toggle" id="themeToggle">🌙</button>
+<header>
+  <div class="brand">
+    <div class="logo">IV</div>
+    <div>
+      <h1>Invexis <span class="small">— Plataforma educativa</span></h1>
+    </div>
+  </div>
 
-  <header>Invexis — Simulador de Juros Compostos e ETFs</header>
+  <div style="display:flex;gap:8px;align-items:center">
+    <div class="small muted">Tema</div>
+    <button id="themeToggle" class="ghost">Toggle</button>
+  </div>
+</header>
 
-  <main>
-    <!-- Painel Esquerdo -->
-    <div class="left-panel">
-      <h3>Simulador</h3>
+<!-- MAIN -->
+<div class="wrap">
+  <!-- LEFT: inputs -->
+  <div class="left">
+    <div class="card">
+      <h3>Simulador de Juros</h3>
+      <p class="muted">Usa a fórmula correta (juros simples / compostos) com aportes mensais.</p>
 
-      <label for="etf">Escolha o ETF:</label>
-      <select id="etf">
-        <option value="SP500">S&P 500</option>
-        <option value="EQQQ">EQQQ</option>
-        <option value="IWDA">IWDA</option>
-      </select>
+      <label>Escolhe ETF:
+        <select id="etfSelect">
+          <!-- value id, data-taxa = taxa média anual, data-vol = volatilidade anual (aprox) -->
+          <option value="sp500" data-taxa="0.10" data-vol="0.15">S&P 500</option>
+          <option value="eqqq" data-taxa="0.13" data-vol="0.20">EQQQ (Nasdaq-100)</option>
+          <option value="iwda" data-taxa="0.085" data-vol="0.12">IWDA (MSCI World)</option>
+          <option value="vhyl" data-taxa="0.07" data-vol="0.10">VHYL (High Dividend)</option>
+        </select>
+        <span class="info" data-tip="Taxa e volatilidade são médias históricas aproximadas.">i</span>
+      </label>
 
-      <label for="capital">Capital inicial (€):</label>
-      <input type="number" id="capital" value="1000">
+      <label>Capital inicial (€):
+        <input id="capital" type="number" value="1000" min="0" />
+      </label>
 
-      <label for="aporte">Aporte mensal (€):</label>
-      <input type="number" id="aporte" value="100">
+      <label>Aporte mensal (€):
+        <input id="aporte" type="number" value="100" min="0" />
+      </label>
 
-      <label for="anos">Anos:</label>
-      <input type="number" id="anos" value="10">
+      <label>Duração (anos):
+        <input id="anos" type="number" value="10" min="1" />
+      </label>
 
-      <label for="taxa">Taxa de retorno anual (%):</label>
-      <input type="number" id="taxa" value="8">
+      <label>Tipo de juros:
+        <select id="tipoJuros">
+          <option value="composto">Composto</option>
+          <option value="simples">Simples</option>
+        </select>
+        <span class="info" data-tip="Simples aplica juros sobre o capital inicial; composto aplica juros sobre capital + rendimentos acumulados.">i</span>
+      </label>
 
-      <button id="calcular">Calcular</button>
+      <label style="margin-top:8px">
+        <input id="volToggle" type="checkbox" /> Simulação realista (volatilidade limitada)
+        <span class="info" data-tip="Ativa flutuações controladas no tempo (sem saltos absurdos).">i</span>
+      </label>
+
+      <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
+        <button id="calcBtn">Calcular</button>
+        <button id="resetBtn" class="ghost">Reset</button>
+      </div>
+
+      <div style="margin-top:12px" class="muted small">
+        <div><strong>Nota:</strong> fórmulas implementadas com aportes mensais (teu método corrigido).</div>
+        <div style="margin-top:6px">Para usar preços de ações em tempo real, insere Finnhub key no widget (à direita).</div>
+      </div>
     </div>
 
-    <!-- Gráfico -->
-    <div class="chart-container">
-      <canvas id="myChart"></canvas>
-    </div>
-
-    <!-- Widgets -->
-    <div class="widgets">
-      <div class="widget">
-        <h3>Bitcoin (BTC)</h3>
-        <p id="btcPrice">A carregar...</p>
-      </div>
-      <div class="widget">
-        <h3>NVIDIA (NVDA)</h3>
-        <p id="nvdaPrice">A carregar...</p>
-      </div>
-      <div class="widget">
-        <h3>Meta (META)</h3>
-        <p id="metaPrice">A carregar...</p>
+    <!-- microcopy card -->
+    <div class="card" style="margin-top:12px">
+      <h4>Microcopy & Ajuda</h4>
+      <div style="margin-top:8px" class="muted small">
+        <div><strong>Juros Compostos:</strong> rendimentos sobre rendimentos — efeito exponencial.</div>
+        <div style="margin-top:6px"><strong>Volatilidade:</strong> mede variação; ativar só se quiseres ver risco ilustrativo.</div>
+        <div style="margin-top:6px"><strong>Aviso legal:</strong> simulações são educativas. Não constituem aconselhamento financeiro.</div>
       </div>
     </div>
-  </main>
+  </div>
 
-  <script>
-    /* ---------- TEMA ESCURO / CLARO ---------- */
-    const toggleBtn = document.getElementById('themeToggle');
-    const body = document.body;
-    toggleBtn.addEventListener('click', () => {
-      body.classList.toggle('light');
-      toggleBtn.textContent = body.classList.contains('light') ? '☀️' : '🌙';
-    });
+  <!-- CENTER: chart -->
+  <div class="center">
+    <div id="chartCard" class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <strong>Projeção</strong>
+          <div class="muted small" id="chartSubtitle">Escolhe parâmetros e clica "Calcular".</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button id="exportCsv" class="ghost">Export CSV</button>
+          <button id="exportPng" class="ghost">Export PNG</button>
+        </div>
+      </div>
 
-    /* ---------- SIMULADOR ---------- */
-    const ctx = document.getElementById('myChart').getContext('2d');
-    let chart;
+      <div id="chartArea" style="margin-top:12px">
+        <canvas id="mainChart"></canvas>
+      </div>
+    </div>
+  </div>
 
-    document.getElementById('calcular').addEventListener('click', () => {
-      const capital = parseFloat(document.getElementById('capital').value);
-      const aporte = parseFloat(document.getElementById('aporte').value);
-      const anos = parseInt(document.getElementById('anos').value);
-      const taxa = parseFloat(document.getElementById('taxa').value) / 100;
+  <!-- RIGHT: widgets + Finnhub key -->
+  <div class="right">
+    <div class="card widget">
+      <h4>Market Highlights <span class="muted" style="font-size:0.85rem;margin-left:8px"> (actualiza cada 30s)</span></h4>
+      <div class="muted small" style="margin-bottom:8px">Cripto: CoinGecko • Ações: Finnhub (usa a tua key)</div>
 
-      const valoresAno = [];
-      let montante = capital;
-      for (let i = 1; i <= anos; i++) {
-        montante = montante * (1 + taxa) + aporte * 12;
-        valoresAno.push(montante.toFixed(2));
-      }
+      <label style="font-size:0.9rem">Finnhub API Key:
+        <input id="finnKey" type="text" class="small-input" placeholder="Cole aqui a tua Finnhub key (local)"/>
+      </label>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button id="saveKey" class="ghost">Guardar (local)</button>
+        <button id="clearKey" class="ghost">Remover</button>
+      </div>
 
-      const labels = Array.from({length: anos}, (_, i) => `${i+1}º Ano`);
+      <div class="widget-list" style="margin-top:12px">
+        <div class="widget" style="padding:10px">
+          <h4>Bitcoin (BTC)</h4>
+          <p id="btcVal">A carregar...</p>
+        </div>
+        <div class="widget" style="padding:10px">
+          <h4>Ethereum (ETH)</h4>
+          <p id="ethVal">A carregar...</p>
+        </div>
+        <div class="widget" style="padding:10px">
+          <h4>AMD (AMD)</h4>
+          <p id="amdVal">A carregar...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-      if (chart) chart.destroy();
+<!-- Floating market widget with attribution (CoinGecko) -->
+<div id="marketWidget" aria-hidden="false">
+  <h5>Market Snapshot</h5>
+  <ul id="marketList"></ul>
+  <div class="cg-attr">
+    <a href="https://www.coingecko.com?utm_source=Invexis&utm_medium=referral" target="_blank" rel="noopener noreferrer">
+      <!-- substitui o caminho abaixo pelo ficheiro SVG/PNG do logo que descarregaste do Brand Kit -->
+      <img src="images/coingecko-logo.svg" alt="CoinGecko" onerror="this.style.display='none'">
+    </a>
+    <div style="color:var(--muted)">Data provided by CoinGecko</div>
+  </div>
+</div>
 
-      chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [{
-            label: 'Crescimento do investimento (€)',
-            data: valoresAno,
-            borderColor: '#3d63ff',
-            tension: 0.25,
-            fill: true,
-            backgroundColor: 'rgba(61,99,255,0.1)'
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            y: { beginAtZero: true }
+<script>
+/* =========================
+   Utility & Theme
+   ========================= */
+const qs = selector => document.querySelector(selector);
+const qsa = selector => Array.from(document.querySelectorAll(selector));
+
+const themeToggle = qs('#themeToggle');
+themeToggle.addEventListener('click', () => {
+  document.body.classList.toggle('light');
+  themeToggle.textContent = document.body.classList.contains('light') ? 'Light' : 'Dark';
+});
+
+/* =========================
+   ETF config
+   ========================= */
+const etfSelect = qs('#etfSelect');
+// each option has dataset: taxa (annual), vol (annual)
+function getSelectedETFData() {
+  const opt = etfSelect.selectedOptions[0];
+  return {
+    id: opt.value,
+    taxa: parseFloat(opt.dataset.taxa) || 0,
+    vol: parseFloat(opt.dataset.vol) || 0.12
+  };
+}
+
+/* =========================
+   Fórmulas corrigidas
+   Implementação:
+   - futuroComposto(capital, aporte, taxaAnual, months)
+   - futuroSimples(capital, aporte, taxaAnual, months)
+   ========================= */
+function futuroComposto(capital, aporte, taxaAnual, months){
+  const r = taxaAnual;
+  const tYears = months / 12;
+  // capital inicial capitalizado com (1+r)^tYears
+  const capitalFuturo = capital * Math.pow(1 + r, tYears);
+  if (r === 0) {
+    // aporte sem juros
+    return capitalFuturo + aporte * months;
+  }
+  const monthlyRate = r / 12;
+  // valor futuro dos aportes mensais capitalizados mensalmente
+  const aportesFuturo = aporte * (Math.pow(1 + monthlyRate, months) - 1) / monthlyRate;
+  return capitalFuturo + aportesFuturo;
+}
+
+function futuroSimples(capital, aporte, taxaAnual, months){
+  const r = taxaAnual;
+  const tYears = months / 12;
+  // capital com juros simples proporcionais ao tempo
+  const capitalFuturo = capital * (1 + r * tYears);
+  // cada aporte mensal tem juros simples proporcional ao tempo restante
+  let aportesFuturo = 0;
+  for (let m = 0; m < months; m++){
+    const remainingYears = (months - m) / 12;
+    aportesFuturo += aporte * (1 + r * remainingYears);
+  }
+  return capitalFuturo + aportesFuturo;
+}
+
+/* =========================
+   Chart setup
+   ========================= */
+const ctx = qs('#mainChart').getContext('2d');
+let mainChart = null;
+
+function drawChart(labels, datasets){
+  if(mainChart) mainChart.destroy();
+  mainChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect:false },
+      plugins: {
+        legend: { display:true, position:'bottom' },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const v = ctx.raw; 
+              return `${ctx.dataset.label}: €${Number(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+            },
+            afterBody: ()=>['Projeção ilustrativa — não é aconselhamento']
           }
         }
-      });
-    });
-
-    /* ---------- PREÇOS (EXEMPLO SEM API) ---------- */
-    async function updatePrices() {
-      // Exemplo: simulação estática
-      document.getElementById('btcPrice').textContent = "€64,200";
-      document.getElementById('nvdaPrice').textContent = "€1,050";
-      document.getElementById('metaPrice').textContent = "€510";
+      },
+      scales: { y: { ticks: { callback: v => '€' + Number(v).toLocaleString() } } },
+      animation: { duration: 600, easing: 'easeOutQuart' }
     }
-    updatePrices();
-  </script>
+  });
+}
+
+/* =========================
+   Simulation generation
+   - Use user's corrected formulas
+   - Generate values per year (1..anos)
+   - If volatility toggle is ON -> apply monthly-level noise with limits to avoid absurd jumps
+   ========================= */
+function simulate({capital, aporte, anos, tipo, taxaAnual, volAnual, withVolatility}) {
+  const labels = [];
+  const values = []; // one dataset for selected ETF
+  // We'll compute for each year i = 1..anos the montante using months = i*12
+  for (let year = 1; year <= anos; year++){
+    const months = year * 12;
+    // base montante using formulas
+    let montanteBase = (tipo === 'simples')
+      ? futuroSimples(capital, aporte, taxaAnual, months)
+      : futuroComposto(capital, aporte, taxaAnual, months);
+
+    // if no volatility, push base
+    if (!withVolatility) {
+      labels.push(`${year}y`);
+      values.push(Number(montanteBase.toFixed(2)));
+      continue;
+    }
+
+    // with volatility: simulate monthly small noise but aggregate to year-end value
+    // Approach: simulate month-by-month with geometric returns using GBM-ish step BUT limit monthly shock magnitude
+    const monthlyRate = taxaAnual / 12;
+    const monthsPerYear = 12;
+    // volatility monthly scaled. We'll cap monthly shock to ±limit (e.g., 0.06 => ±6% per month)
+    const monthlyVol = volAnual / Math.sqrt(12); // std dev per month approx
+    const monthlyLimit = 0.06; // cap per month to avoid absurd jumps (6% by default)
+    // run month-by-month simulation starting from capital, adding aportes
+    let mont = capital;
+    for (let m = 0; m < months; m++){
+      // apply return for the month:
+      // drift = monthlyRate, diffusion = monthlyVol * randNormal()
+      const drift = monthlyRate;
+      const rawNoise = randn_bm() * monthlyVol; // normal(0, monthlyVol)
+      // cap noise
+      const noise = Math.max(Math.min(rawNoise, monthlyLimit), -monthlyLimit);
+      // multiplicative growth approximation
+      mont = mont * (1 + drift + noise);
+      // add monthly aporte at end of month
+      mont += aporte;
+    }
+    labels.push(`${year}y`);
+    values.push(Number(mont.toFixed(2)));
+  }
+
+  return { labels, values };
+}
+
+// Box-Muller normal generator
+function randn_bm() {
+  let u = 0, v = 0;
+  while(u === 0) u = Math.random();
+  while(v === 0) v = Math.random();
+  return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+}
+
+/* =========================
+   Event handlers: Calc, Reset
+   ========================= */
+qs('#calcBtn').addEventListener('click', () => {
+  const capital = parseFloat(qs('#capital').value) || 0;
+  const aporte = parseFloat(qs('#aporte').value) || 0;
+  const anos = parseInt(qs('#anos').value) || 1;
+  const tipo = qs('#tipoJuros').value;
+  const { taxa, vol } = getSelectedETFData();
+  const withVolatility = qs('#volToggle').checked;
+
+  // run simulation: we produce labels and one dataset (ETF selected)
+  const sim = simulate({
+    capital, aporte, anos, tipo,
+    taxaAnual: taxa, volAnual: vol, withVolatility
+  });
+
+  const dataset = {
+    label: `${etfSelect.selectedOptions[0].text} (taxa: ${(taxa*100).toFixed(2)}%)`,
+    data: sim.values,
+    borderColor: '#74b3ff',
+    backgroundColor: 'rgba(116,179,255,0.12)',
+    fill: true,
+    tension: 0.25,
+    pointRadius: 3
+  };
+
+  drawChart(sim.labels, [dataset]);
+
+  // subtitle and result summary
+  const final = sim.values[sim.values.length-1] || 0;
+  qs('#chartSubtitle').textContent = `Montante final estimado: €${Number(final).toLocaleString(undefined,{minimumFractionDigits:2})}`;
+});
+
+/* Reset */
+qs('#resetBtn').addEventListener('click', () => {
+  qs('#capital').value = 1000;
+  qs('#aporte').value = 100;
+  qs('#anos').value = 10;
+  qs('#tipoJuros').value = 'composto';
+  qs('#volToggle').checked = false;
+  qs('#chartSubtitle').textContent = 'Escolhe parâmetros e clica \"Calcular\".';
+  if (mainChart) mainChart.destroy();
+});
+
+/* Export CSV & PNG (simple) */
+qs('#exportCsv').addEventListener('click', () => {
+  if (!mainChart) { alert('Gera o gráfico antes.'); return; }
+  const labels = mainChart.data.labels;
+  const rows = [ ['Periodo', ...mainChart.data.datasets.map(d=>d.label)] ];
+  for (let i=0;i<labels.length;i++){
+    const row = [labels[i]];
+    mainChart.data.datasets.forEach(ds => row.push(ds.data[i] ?? ''));
+    rows.push(row);
+  }
+  const csv = rows.map(r => r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'invexis_simulation.csv'; a.click();
+  URL.revokeObjectURL(url);
+});
+qs('#exportPng').addEventListener('click', () => {
+  if (!mainChart) { alert('Gera o gráfico antes.'); return; }
+  const url = mainChart.toBase64Image();
+  const a = document.createElement('a'); a.href = url; a.download = 'invexis_chart.png'; a.click();
+});
+
+/* =========================
+   Market widget: CoinGecko (BTC, ETH) + Finnhub (AMD) using key stored locally
+   - Finnhub key saved to localStorage (NOT SECURE for prod)
+   - Better approach in production: serverless proxy using env var
+   ========================= */
+const marketList = qs('#marketList');
+const btcVal = qs('#btcVal');
+const ethVal = qs('#ethVal');
+const amdVal = qs('#amdVal');
+
+async function loadMarketWidget(){
+  marketList.innerHTML = '';
+  try {
+    // CoinGecko for BTC & ETH
+    const cg = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true');
+    const cgj = await cg.json();
+    // append BTC
+    const liBTC = document.createElement('li');
+    const btcPrice = cgj.bitcoin?.usd ?? 0;
+    const btcChange = (cgj.bitcoin?.usd_24h_change ?? 0).toFixed(2);
+    liBTC.innerHTML = `<span>BTC</span><span style="color:${btcChange>=0? 'var(--positive)':'var(--negative)'}">$${Number(btcPrice).toLocaleString()} (${btcChange>0?'+':''}${btcChange}%)</span>`;
+    marketList.appendChild(liBTC);
+    // ETH
+    const liETH = document.createElement('li');
+    const ethPrice = cgj.ethereum?.usd ?? 0;
+    const ethChange = (cgj.ethereum?.usd_24h_change ?? 0).toFixed(2);
+    liETH.innerHTML = `<span>ETH</span><span style="color:${ethChange>=0? 'var(--positive)':'var(--negative)'}">$${Number(ethPrice).toLocaleString()} (${ethChange>0?'+':''}${ethChange}%)</span>`;
+    marketList.appendChild(liETH);
+  } catch(e){
+    const li = document.createElement('li'); li.textContent = 'Erro CoinGecko'; marketList.appendChild(li);
+  }
+
+  // Finnhub (stocks) — using local key if present
+  const key = localStorage.getItem('d45su2hr01qieo4rq580d45su2hr01qieo4rq58g') || qs('#finnKey').value.trim();
+  if (key){
+    try {
+      // AMD quote
+      const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=AMD&token=${key}`);
+      const j = await r.json();
+      const current = j.c || 0; const prev = j.pc || current;
+      const change = ((current - prev)/ (prev || current)) * 100;
+      const liAMD = document.createElement('li');
+      liAMD.innerHTML = `<span>AMD</span><span style="color:${change>=0? 'var(--positive)':'var(--negative)'}">$${Number(current).toLocaleString()} (${change>=0?'+':''}${change.toFixed(2)}%)</span>`;
+      marketList.appendChild(liAMD);
+
+      // fill right-side widgets
+      qs('#amdVal').textContent = `$${Number(current).toLocaleString()} (${change>=0?'+':''}${change.toFixed(2)}%)`;
+    } catch(e){
+      const li = document.createElement('li'); li.textContent = 'Erro Finnhub'; marketList.appendChild(li);
+    }
+  } else {
+    const li = document.createElement('li'); li.innerHTML = '<em class="muted">Cole Finnhub key para preços de ações</em>'; marketList.appendChild(li);
+  }
+}
+
+/* right-side crypto quick values */
+async function loadRightWidgets(){
+  try {
+    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true');
+    const j = await r.json();
+    const btcPrice = j.bitcoin?.usd ?? 0; const btcChange = (j.bitcoin?.usd_24h_change ?? 0).toFixed(2);
+    qs('#btcVal').textContent = `$${Number(btcPrice).toLocaleString()} (${btcChange>0?'+':''}${btcChange}%)`;
+
+    const ethPrice = j.ethereum?.usd ?? 0; const ethChange = (j.ethereum?.usd_24h_change ?? 0).toFixed(2);
+    qs('#ethVal').textContent = `$${Number(ethPrice).toLocaleString()} (${ethChange>0?'+':''}${ethChange}%)`;
+  } catch(e){
+    qs('#btcVal').textContent = 'Erro';
+    qs('#ethVal').textContent = 'Erro';
+  }
+}
+
+/* Finnhub key save / clear (local only) */
+qs('#saveKey').addEventListener('click', () => {
+  const k = qs('#finnKey').value.trim();
+  if (!k) { alert('Cole a chave Finnhub antes.'); return; }
+  localStorage.setItem('d45su2hr01qieo4rq580d45su2hr01qieo4rq58g', k);
+  alert('Finnhub key guardada localmente. Em produção usa variáveis de ambiente e serverless.');
+  loadMarketWidget();
+});
+qs('#clearKey').addEventListener('click', () => {
+  localStorage.removeItem('FINNHUB_KEY');
+  qs('#finnKey').value = '';
+  alert('Finnhub key removida.');
+  loadMarketWidget();
+});
+
+/* auto-load market data */
+loadMarketWidget();
+loadRightWidgets();
+setInterval(() => { loadMarketWidget(); loadRightWidgets(); }, 30000);
+
+/* load key from localStorage on start */
+const finnHubKey ='d45su2hr01qieo4rq580d45su2hr01qieo4rq58g';
+if (stored) qs('#finnKey').value = stored;
+
+/* initial small demo: auto-select default ETF and draw a demo */
+(function initialDemo(){
+  // draw a small baseline with current default values but no volatility
+  qs('#calcBtn').click?.();
+})();
+
+</script>
 </body>
 </html>
